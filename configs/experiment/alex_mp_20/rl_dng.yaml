@@ -1,0 +1,27 @@
+# @package _global_
+defaults:
+  - override /data: alex_mp_20
+  - override /rl_module: rl_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /paths: default
+  - override /hydra: default
+
+data:
+  batch_size: 5
+
+rl_module:
+  ldm_ckpt_path: ckpts/alex_mp_20/ldm/ldm_null_k744ob4i.ckpt
+
+  rl_configs:
+    num_group_samples: 64
+    group_reward_norm: true
+
+  reward_fn:
+    reward_type: dng
+    reference_dataset: alex-mp-20
+
+logger:
+  wandb:
+    name: rl_dng

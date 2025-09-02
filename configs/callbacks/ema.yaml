@@ -1,0 +1,3 @@
+exponential_moving_average:
+  _target_: src.utils.ema_callback.EMA
+  decay: 0.9999

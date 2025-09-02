@@ -1,0 +1,39 @@
+defaults:
+  - data: mp-20
+  - vae_module: vae_module
+  - callbacks: default
+  - logger: wandb
+  - scheduler: constant
+  - trainer: default
+  - paths: default
+  - hydra: default
+  - _self_
+  - experiment: null
+
+trainer:
+  max_epochs: 5000
+
+data:
+  mace_features: False
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/total_loss"
+    mode: "min"
+
+  early_stopping:
+    monitor: "val/total_loss"
+    patience: 10
+    mode: "min"
+
+# task name, determines output directory path
+task_name: "train_vae"
+
+# Load a pre-trained checkpoint
+ckpt_path: null
+
+# simply provide checkpoint path to resume training
+resume_from: null
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 0

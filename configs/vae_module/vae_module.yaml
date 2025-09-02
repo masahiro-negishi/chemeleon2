@@ -1,0 +1,39 @@
+defaults:
+  - encoder: transformer
+  - decoder: transformer
+
+_target_: src.vae_module.vae_module.VAEModule
+
+latent_dim: 8
+
+loss_weights:
+  atom_types: 1.0
+  lengths: 1.0
+  angles: 10.0
+  frac_coords: 10.0
+  kl: 1e-5
+  fa: 0.0
+
+augmentation:
+  translate: true # translate cartesian and fractional coordinates
+  rotate: true # rotate lattice and cartesian coordinates
+
+noise:
+  ratio: 0.0 # ratio of noise to apply to the input data
+  corruption_scale: 0.1 # Å
+
+atom_type_predict: True
+
+structure_matcher:
+  _target_: pymatgen.analysis.structure_matcher.StructureMatcher
+  ltol: 0.3
+  stol: 0.5
+  angle_tol: 10
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1e-4
+  weight_decay: 0.0
+
+scheduler: ${scheduler}

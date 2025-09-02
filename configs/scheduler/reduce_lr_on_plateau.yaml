@@ -1,0 +1,7 @@
+_target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+
+_partial_: true
+mode: "min"
+factor: 0.5
+patience: 2 # x check_val_every_n_epoch
+min_lr: 1e-6

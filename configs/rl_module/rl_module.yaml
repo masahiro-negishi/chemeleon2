@@ -1,0 +1,32 @@
+_target_: src.rl_module.rl_module.RLModule
+
+ldm_ckpt_path: path/to/ckpts
+
+rl_configs:
+  clip_ratio: 0.001
+  kl_weight: 1.0
+  entropy_weight: 1e-5
+  num_group_samples: 1
+  group_reward_norm: true
+  num_inner_batch: 2
+
+reward_fn:
+  _target_: src.rl_module.reward.ReinforceReward
+  reward_type: dng
+  normalize_fn: std
+
+sampling_configs:
+  sampler: ddim
+  sampling_steps: 50
+  eta: 1.0 # only used for ddim (1 for ddpm, 0 for deterministic)
+  cfg_scale: 2.0 # only used for cfg
+  collect_trajectory: true
+  progress: false
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1e-5
+  weight_decay: 0.0
+
+scheduler: ${scheduler}

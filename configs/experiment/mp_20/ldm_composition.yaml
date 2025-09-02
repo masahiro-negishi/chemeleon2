@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - override /data: mp-20
+  - override /ldm_module: ldm_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /trainer: default
+  - override /paths: default
+  - override /hydra: default
+
+ldm_module:
+  vae_ckpt_path: ckpts/mp_20/vae/dng_m4owq4i5_v0.ckpt
+
+data:
+  target_condition: composition
+
+logger:
+  wandb:
+    name: "ldm_composition"
+    group: "${task_name}/${data.dataset_type}"
+    tags: ["ldm", "dng", "composition_condition"]

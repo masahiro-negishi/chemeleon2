@@ -1,0 +1,9 @@
+_target_: src.vae_module.encoders.cspnet.CSPNet
+
+max_num_elements: 100
+hidden_dim: 512
+num_layers: 6
+num_freqs: 128
+ln: true
+ip: true
+smooth: False

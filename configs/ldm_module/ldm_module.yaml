@@ -1,0 +1,37 @@
+defaults:
+  - denoiser: dit_b
+
+_target_: src.ldm_module.ldm_module.LDMModule
+
+ldm_ckpt_path: null
+vae_ckpt_path: null
+normalize_latent: true
+
+augmentation:
+  translate: true # translate cartesian and fractional coordinates
+  rotate: true # rotate lattice and cartesian coordinates
+
+diffusion_configs:
+  timestep_respacing: ""
+  predict_xstart: false
+  rescale_learned_sigmas: true
+  learn_sigma: true
+  diffusion_steps: 1000
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1e-4
+  weight_decay: 0.0
+
+scheduler: ${scheduler}
+
+condition_module: null
+# Condition example
+# condition_module:
+#   condition_type: { band_gap: "float", composition: "composition" }
+#   stats: { band_gap: { mean: 0.75, std: 1.40 }, composition: None }
+#   hidden_dim: ${ldm_module.denoiser.hidden_size}
+#   drop_prob: 0.2
+
+lora_configs: null

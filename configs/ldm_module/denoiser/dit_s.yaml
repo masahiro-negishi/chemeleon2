@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+depth: 6
+hidden_size: 384
+num_heads: 6

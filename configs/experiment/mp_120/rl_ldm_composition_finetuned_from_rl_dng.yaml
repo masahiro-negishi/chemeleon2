@@ -1,0 +1,28 @@
+# @package _global_
+defaults:
+  - override /data: mp-120
+  - override /rl_module: rl_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /paths: default
+  - override /hydra: default
+
+data:
+  batch_size: 16
+  target_condition: ["composition"]
+
+rl_module:
+  ldm_ckpt_path: ckpts/mp_120/ldm/ldm_composition_finetuned_from_rl_dng.ckpt
+
+  rl_configs:
+    num_group_samples: 10
+    group_reward_norm: true
+
+  reward_fn:
+    reward_type: csp
+    reference_dataset: mp-all
+
+logger:
+  wandb:
+    name: rl_csp

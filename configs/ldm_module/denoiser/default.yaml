@@ -1,0 +1,5 @@
+_target_: src.ldm_module.denoisers.dit.DiT
+
+latent_dim: 8
+mlp_ratio: 4
+learn_sigma: ${ldm_module.diffusion_configs.learn_sigma}

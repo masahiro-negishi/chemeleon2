@@ -1,0 +1,49 @@
+defaults:
+  - data: mp-20
+  - rl_module: rl_module
+  - callbacks: default
+  - logger: wandb
+  - scheduler: constant
+  - paths: default
+  - hydra: default
+
+  - _self_
+  - experiment: null
+
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+  default_root_dir: ${paths.output_dir}
+  max_steps: 10000
+  strategy: ddp
+  accelerator: gpu
+  devices: 1
+  gradient_clip_val: null
+  limit_val_batches: 1 # TODO: increase
+  log_every_n_steps: 1 # TODO: increase
+  val_check_interval: 5 # TODO: increase
+  deterministic: false
+
+logger:
+  wandb:
+    log_model: false
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/reward"
+    mode: "max"
+    every_n_train_steps: ${trainer.log_every_n_steps}
+    filename: "epoch{epoch:02d}-step{step:06d}-val_reward{val/reward:.2f}"
+
+  early_stopping:
+    monitor: "val/reward"
+    patience: 200
+    mode: "max"
+
+# task name, determines output directory path
+task_name: "train_rl"
+
+# simply provide checkpoint path to resume training
+ckpt_path: null
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 0

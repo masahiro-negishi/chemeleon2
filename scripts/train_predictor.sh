@@ -1,0 +1,2 @@
+# train alex_mp_20_bandgap
+python src/train_predictor.py experiment=alex_mp_20_bandgap/predictor_dft_band_gap

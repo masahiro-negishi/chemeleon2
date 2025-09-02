@@ -1,0 +1,60 @@
+defaults:
+  - data: alex_mp_20
+  - callbacks: default
+  - logger: wandb
+  - scheduler: constant
+  - trainer: default
+  - paths: default
+  - hydra: default
+  - _self_
+  - experiment: null
+
+predictor_module:
+  _target_: src.vae_module.predictor_module.PredictorModule
+  vae:
+    _target_: src.vae_module.vae_module.VAEModule.load_from_checkpoint
+    checkpoint_path: "/path/to/vae/checkpoint" # This should point to the actual checkpoint file
+    map_location: "cuda"
+
+  target_conditions:
+    null
+    # example
+    # band_gap:
+    #   mean: 0.797
+    #   std: 1.408
+    # e_above_hull:
+    #   null
+
+  reduce: mean # mean, sum
+  use_encoder_features: True
+
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 1e-3
+    weight_decay: 0.0
+
+  scheduler: ${scheduler}
+
+trainer:
+  max_epochs: 1000
+  check_val_every_n_epoch: 10
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/loss"
+    mode: "min"
+
+  early_stopping:
+    monitor: "val/loss"
+    patience: 200
+    mode: "min"
+
+# task name, determines output directory path
+task_name: "train_predictor"
+
+# simply provide checkpoint path to resume training
+ckpt_path: null
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 0

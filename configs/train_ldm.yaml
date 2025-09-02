@@ -1,0 +1,37 @@
+defaults:
+  - data: mp-20
+  - ldm_module: ldm_module
+  - callbacks: default
+  - logger: wandb
+  - scheduler: constant
+  - trainer: default
+  - paths: default
+  - hydra: default
+  - _self_
+  - experiment: null
+
+trainer:
+  max_epochs: 5000
+
+callbacks:
+  exponential_moving_average:
+    _target_: src.utils.ema_callback.EMA
+    decay: 0.9999
+
+  model_checkpoint:
+    monitor: "val/total_loss"
+    mode: "min"
+
+  early_stopping:
+    monitor: "val/total_loss"
+    patience: 200
+    mode: "min"
+
+# task name, determines output directory path
+task_name: "train_ldm"
+
+# simply provide checkpoint path to resume training
+ckpt_path: null
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 0

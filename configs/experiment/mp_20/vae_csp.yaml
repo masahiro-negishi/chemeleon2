@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - override /data: mp-20
+  - override /vae_module: vae_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /trainer: default
+  - override /paths: default
+  - override /hydra: default
+
+trainer:
+  max_epochs: 5000
+
+vae_module:
+  loss_weights:
+    atom_types: 0
+
+  atom_type_predict: false
+
+logger:
+  wandb:
+    name: "vae_csp"
+    group: "${task_name}/${data.dataset_type}"
+    tags: ["vae", "csp"]

@@ -1,0 +1,79 @@
+defaults:
+  - data: mp-20
+  - vae_module: vae_module
+  - callbacks: default
+  - logger: wandb
+  - trainer: default
+  - paths: default
+  - hydra: default
+  - _self_
+
+# Name of the sweep
+name: vae-sweep
+
+trainer:
+  max_epochs: 100
+  check_val_every_n_epoch: 50
+  # limit_train_batches: 1
+  limit_val_batches: 10
+
+vae_module:
+  scheduler: # Constant lr scheudler
+    start_factor: 1.0
+
+logger:
+  wandb:
+    log_model: False
+
+# Number of sweep runs to perform
+sweep_count: 1000
+
+# Weights & Biases sweep configuration
+sweep_config:
+  method: bayes # random, grid, or bayes
+  metric:
+    name: val/structure_matching
+    goal: maximize
+
+  parameters:
+    trainer.gradient_clip_val:
+      values: [5.0]
+
+    vae_module.optimizer.lr:
+      values: [1e-4]
+
+    vae_module.optimizer.weight_decay:
+      values: [1e-4, 0]
+
+    vae_module.latent_dim:
+      values: [8]
+
+    vae_module.loss_weights.atom_types:
+      values: [0.1]
+
+    vae_module.loss_weights.lengths:
+      values: [0.1]
+
+    vae_module.loss_weights.angles:
+      values: [1.0]
+
+    vae_module.loss_weights.frac_coords:
+      values: [1.0]
+
+    vae_module.loss_weights.cart_coords:
+      values: [0.0]
+
+    vae_module.loss_weights.kl:
+      values: [1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
+
+# task name, determines output directory path
+task_name: "train_vae"
+
+# simply provide checkpoint path to resume training
+ckpt_path: null
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: null
+
+# Sweep ID to resume a sweep
+resume_sweep_id: null

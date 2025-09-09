@@ -155,6 +155,7 @@ class LDMModule(LightningModule):
         return_atoms: bool = False,
         return_structure: bool = False,
         collect_trajectory: bool = False,
+        return_trajectory: bool = False,
         progress: bool = True,
     ):
         # Set up the sampler
@@ -198,6 +199,23 @@ class LDMModule(LightningModule):
         trajectory = defaultdict(list)
         trajectory["z"].append(z)  # (B, N, L)
 
+        # Function to decode latent vectors to structures
+        def _decode_latent(diffusion_out, mask, batch):
+            if self.use_cfg:
+                diffusion_out, _ = diffusion_out.chunk(2, dim=0)  # (B, N, L)
+                mask, _ = mask.chunk(2, dim=0)  # (B, N)
+            diffusion_out = diffusion_out * self.latent_std
+
+            # Decode the sample
+            encoded_batch = dict(
+                x=diffusion_out[mask],
+                num_atoms=batch.num_atoms,
+                batch=batch.batch,
+                token_idx=batch.token_idx,
+            )
+            decoder_out = self.vae.decode(encoded_batch)
+            return self.vae.reconstruct(decoder_out, batch)
+
         # Sample from the diffusion model
         for out in sampler_fn(
             model=(
@@ -218,31 +236,24 @@ class LDMModule(LightningModule):
                 trajectory["mean"].append(out["mean"])  # (B, N, L)
                 trajectory["std"].append(out["std"])  # (B, N, L)
 
+            if return_trajectory:
+                batch_rec = _decode_latent(diffusion_out, mask, batch)
+                trajectory["atoms"].append(batch_rec.to_atoms())
+                trajectory["structure"].append(batch_rec.to_structure())
+
+        batch_rec = _decode_latent(diffusion_out, mask, batch)
+
+        # Collect trajectory
         if collect_trajectory:
             for k, v in trajectory.items():
-                setattr(batch, f"{k}s", torch.stack(v, dim=0))
-
-        if self.use_cfg:
-            diffusion_out, _ = diffusion_out.chunk(2, dim=0)  # (B, N, L)
-            mask, _ = mask.chunk(2, dim=0)  # (B, N)
-        diffusion_out = diffusion_out * self.latent_std
-
-        if collect_trajectory:
-            for k, v in trajectory.items():
-                setattr(batch, f"{k}s", torch.stack(v, dim=0))
-            setattr(batch, "mask", mask)
-
-        # Decode the sample
-        encoded_batch = dict(
-            x=diffusion_out[mask],
-            num_atoms=batch.num_atoms,
-            batch=batch.batch,
-            token_idx=batch.token_idx,
+                setattr(batch_rec, f"{k}s", torch.stack(v, dim=0))
+        setattr(
+            batch_rec, "mask", mask if not self.use_cfg else mask.chunk(2, dim=0)[0]
         )
-        decoder_out = self.vae.decode(encoded_batch)
-        batch_rec = self.vae.reconstruct(decoder_out, batch)
 
-        # Convert to Atoms or Structure
+        # Return results
+        if return_trajectory:
+            return trajectory
         if return_atoms:
             return batch_rec.to_atoms()
         elif return_structure:

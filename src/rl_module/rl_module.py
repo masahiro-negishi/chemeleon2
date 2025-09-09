@@ -43,10 +43,6 @@ class RLModule(LightningModule):
         for param in self.ldm.vae.parameters():
             param.requires_grad = False
         self.use_cfg = self.ldm.use_cfg
-        if self.use_cfg:
-            self.ldm.condition_module.eval()
-            for param in self.ldm.condition_module.parameters():
-                param.requires_grad = False
 
         # Sampling Diffusion
         if sampling_configs.sampler == "ddim":

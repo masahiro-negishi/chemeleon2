@@ -18,6 +18,7 @@ class RewardType(enum.Enum):
     DNG = "dng"
     CSP = "csp"
     CUSTOM = "custom"
+    BANDGAP = "bandgap"
 
 
 class ReinforceReward(torch.nn.Module):
@@ -29,6 +30,7 @@ class ReinforceReward(torch.nn.Module):
         normalize_fn: str,
         eps: float = 1e-4,
         reference_dataset: str = "mp-20",
+        **kwargs,
     ):
         super().__init__()
         print(f"Starting setup for reward type: {reward_type}")
@@ -65,6 +67,19 @@ class ReinforceReward(torch.nn.Module):
             reward_fn = partial(reward_csp, m=m)
         elif self.reward_type == RewardType.CUSTOM:
             reward_fn = custom_reward
+        elif self.reward_type == RewardType.BANDGAP:
+            assert (
+                "predictor" in kwargs
+            ), "Predictor model must be provided for bandgap reward."
+            from src.vae_module.predictor_module import PredictorModule
+
+            predictor: PredictorModule = kwargs["predictor"]
+            predictor.eval()
+            reward_fn = partial(
+                reward_bandgap,
+                predictor=predictor,
+                target_value=kwargs.get("target_bandgap"),
+            )
         else:
             raise ValueError(f"Unknown reward type: {reward_type}")
         self.reward_fn = reward_fn
@@ -218,6 +233,16 @@ def custom_reward(batch_gen: CrystalBatch) -> torch.Tensor:
     gen_structures = batch_gen.to_structure()
     # Placeholder implementation - replace with actual custom reward calculation
     return torch.ones(len(gen_structures), dtype=torch.float32)
+
+
+def reward_bandgap(
+    batch_gen: CrystalBatch, predictor, target_value=None
+) -> torch.Tensor:
+    pred = predictor.predict(batch_gen)
+    pred = pred["dft_band_gap"].clamp(min=0.0)
+    if target_value is not None:
+        pred = -((pred - target_value) ** 2)
+    return pred
 
 
 ###############################################################################

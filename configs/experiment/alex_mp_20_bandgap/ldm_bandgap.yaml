@@ -1,0 +1,48 @@
+# @package _global_
+defaults:
+  - override /ldm_module: ldm_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /trainer: default
+  - override /paths: default
+  - override /hydra: default
+
+data:
+  _target_: src.data.datamodule.DataModule
+  data_dir: ${paths.data_dir}/alex_mp_20_bandgap
+  batch_size: 128
+  dataset_type: "alex_mp_20_bandgap"
+  target_condition: dft_band_gap
+  mace_features: false
+  num_workers: 16
+  pin_memory: false
+
+trainer:
+  max_epochs: 1000
+  # strategy: "ddp_find_unused_parameters_true"
+
+ldm_module:
+  ldm_ckpt_path: "ckpts/alex_mp_20/ldm/ldm_rl_dng_tuor5vgd.ckpt"
+
+  condition_module:
+    condition_type: { dft_band_gap: "float" }
+    stats:
+      dft_band_gap:
+        mean: 0.797
+        std: 1.408
+    hidden_dim: 768
+    drop_prob: 0.2
+
+  # lora_configs:
+  #   r: 16
+  #   lora_alpha: 32
+  #   lora_dropout: 0.1
+  #   target_modules: ["attn.out_proj", "mlp.fc1", "mlp.fc2"]
+  #   bias: "none"
+
+logger:
+  wandb:
+    name: "ldm_bandgap"
+    group: "${task_name}/${data.dataset_type}/condition"
+    tags: ["ldm", "dng", "condition", "finetune", "dft_band_gap"]

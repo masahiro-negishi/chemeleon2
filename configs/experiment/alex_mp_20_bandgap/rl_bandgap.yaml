@@ -18,7 +18,7 @@ data:
   pin_memory: false
 
 trainer:
-  max_epochs: 10000
+  max_steps: 1000
   # strategy: ddp_find_unused_parameters_true
 
 rl_module:
@@ -35,8 +35,14 @@ rl_module:
     predictor:
       _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
       checkpoint_path: "ckpts/alex_mp_20_bandgap/predictor/predictor_dft_band_gap_e8mhs4yg.ckpt"
-      map_location: "cuda"
+      map_location: "cpu"
     target_bandgap: 3.0
+
+callbacks:
+  early_stopping:
+    monitor: "val/reward"
+    patience: 10
+    mode: "max"
 
 logger:
   wandb:

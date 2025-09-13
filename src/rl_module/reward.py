@@ -10,6 +10,7 @@ import torch
 from src.data.schema import CrystalBatch
 from src.utils.metrics import Metrics, structures_to_amd
 from src.utils.featurizer import featurize
+from src.vae_module.predictor_module import PredictorModule
 
 
 class RewardType(enum.Enum):
@@ -68,11 +69,8 @@ class ReinforceReward(torch.nn.Module):
         elif self.reward_type == RewardType.CUSTOM:
             reward_fn = custom_reward
         elif self.reward_type == RewardType.BANDGAP:
-            assert (
-                "predictor" in kwargs
-            ), "Predictor model must be provided for bandgap reward."
-            from src.vae_module.predictor_module import PredictorModule
-
+            if "predictor" not in kwargs:
+                raise ValueError("Predictor model must be provided for bandgap reward.")
             predictor: PredictorModule = kwargs["predictor"]
             predictor.eval()
             reward_fn = partial(
@@ -238,11 +236,27 @@ def custom_reward(batch_gen: CrystalBatch) -> torch.Tensor:
 def reward_bandgap(
     batch_gen: CrystalBatch, predictor, target_value=None
 ) -> torch.Tensor:
-    pred = predictor.predict(batch_gen)
+    device = predictor.device
+    pred = predictor.predict(batch_gen.to(device))
     pred = pred["dft_band_gap"].clamp(min=0.0)
     if target_value is not None:
         pred = -((pred - target_value) ** 2)
-    return pred
+    r_bandgap = normalize(pred)
+
+    # For diversity reward (This part is optional, can be removed if not needed)
+    m = Metrics(metrics=["composition_diversity"])
+    ref_composition_features = m._reference_composition_features.to(device)
+    gen_structures = batch_gen.to_structure()
+    gen_features = featurize(gen_structures)
+    gen_composition_features = gen_features["composition_features"].to(device)
+    r_composition_diversity = mmd_reward(
+        z_gen=gen_composition_features, z_ref=ref_composition_features
+    )["r_indiv"]
+    r_composition_diversity = normalize(r_composition_diversity)
+
+    # Total rewards
+    total_rewards = r_bandgap + 0.5 * r_composition_diversity
+    return total_rewards
 
 
 ###############################################################################

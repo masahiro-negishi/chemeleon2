@@ -18,9 +18,9 @@ trainer:
   accelerator: gpu
   devices: 1
   gradient_clip_val: null
-  limit_val_batches: 1 # TODO: increase
-  log_every_n_steps: 1 # TODO: increase
-  val_check_interval: 5 # TODO: increase
+  limit_val_batches: 1
+  log_every_n_steps: 1
+  val_check_interval: 5
   deterministic: false
 
 logger:

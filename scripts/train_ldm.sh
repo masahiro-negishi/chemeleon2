@@ -24,3 +24,7 @@ python src/train_ldm.py experiment=mp_120/ldm_composition_lora_finetuned_from_rl
 
 # mp_amorphous
 python src/train_ldm.py experiment=mp_amorphous/mp_amorphous
+
+# alex_mp_20_bandgap
+python src/train_ldm.py experiment=alex_mp_20_bandgap/ldm_bandgap
+python src/train_ldm.py experiment=alex_mp_20_bandgap/ldm_bandgap_lora

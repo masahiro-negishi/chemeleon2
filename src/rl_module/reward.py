@@ -10,6 +10,7 @@ import torch
 from src.data.schema import CrystalBatch
 from src.utils.metrics import Metrics, structures_to_amd
 from src.utils.featurizer import featurize
+from src.vae_module.predictor_module import PredictorModule
 
 
 class RewardType(enum.Enum):
@@ -18,6 +19,7 @@ class RewardType(enum.Enum):
     DNG = "dng"
     CSP = "csp"
     CUSTOM = "custom"
+    BANDGAP = "bandgap"
 
 
 class ReinforceReward(torch.nn.Module):
@@ -29,6 +31,7 @@ class ReinforceReward(torch.nn.Module):
         normalize_fn: str,
         eps: float = 1e-4,
         reference_dataset: str = "mp-20",
+        **kwargs,
     ):
         super().__init__()
         print(f"Starting setup for reward type: {reward_type}")
@@ -65,6 +68,16 @@ class ReinforceReward(torch.nn.Module):
             reward_fn = partial(reward_csp, m=m)
         elif self.reward_type == RewardType.CUSTOM:
             reward_fn = custom_reward
+        elif self.reward_type == RewardType.BANDGAP:
+            if "predictor" not in kwargs:
+                raise ValueError("Predictor model must be provided for bandgap reward.")
+            predictor: PredictorModule = kwargs["predictor"]
+            predictor.eval()
+            reward_fn = partial(
+                reward_bandgap,
+                predictor=predictor,
+                target_value=kwargs.get("target_bandgap"),
+            )
         else:
             raise ValueError(f"Unknown reward type: {reward_type}")
         self.reward_fn = reward_fn
@@ -218,6 +231,32 @@ def custom_reward(batch_gen: CrystalBatch) -> torch.Tensor:
     gen_structures = batch_gen.to_structure()
     # Placeholder implementation - replace with actual custom reward calculation
     return torch.ones(len(gen_structures), dtype=torch.float32)
+
+
+def reward_bandgap(
+    batch_gen: CrystalBatch, predictor, target_value=None
+) -> torch.Tensor:
+    device = predictor.device
+    pred = predictor.predict(batch_gen.to(device))
+    pred = pred["dft_band_gap"].clamp(min=0.0)
+    if target_value is not None:
+        pred = -((pred - target_value) ** 2)
+    r_bandgap = normalize(pred)
+
+    # For diversity reward (This part is optional, can be removed if not needed)
+    m = Metrics(metrics=["composition_diversity"])
+    ref_composition_features = m._reference_composition_features.to(device)
+    gen_structures = batch_gen.to_structure()
+    gen_features = featurize(gen_structures)
+    gen_composition_features = gen_features["composition_features"].to(device)
+    r_composition_diversity = mmd_reward(
+        z_gen=gen_composition_features, z_ref=ref_composition_features
+    )["r_indiv"]
+    r_composition_diversity = normalize(r_composition_diversity)
+
+    # Total rewards
+    total_rewards = r_bandgap + 0.5 * r_composition_diversity
+    return total_rewards
 
 
 ###############################################################################

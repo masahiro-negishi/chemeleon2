@@ -8,6 +8,10 @@ defaults:
   - override /paths: default
   - override /hydra: default
 
+trainer:
+  max_epochs: 10000
+  strategy: ddp_find_unused_parameters_true
+
 data:
   batch_size: 16
   target_condition: ["composition"]

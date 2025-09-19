@@ -1,0 +1,26 @@
+# @package _global_
+defaults:
+  - override /data: mp-40
+  - override /vae_module: vae_module
+  - override /callbacks: default
+  - override /logger: wandb
+  - override /scheduler: constant
+  - override /trainer: default
+  - override /paths: default
+  - override /hydra: default
+
+trainer:
+  max_epochs: 5000
+  accelerator: "gpu"
+  devices: 2
+  strategy: "ddp"
+
+
+vae_module:
+  atom_type_predict: true
+
+logger:
+  wandb:
+    name: "vae_dng"
+    group: "${task_name}/${data.dataset_type}"
+    tags: ["vae", "dng"]

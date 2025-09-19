@@ -11,27 +11,32 @@ from torch_geometric.utils import to_dense_batch
 
 from src.utils.scatter import scatter_mean
 
+from src.vae_module.positional_embeddings import (
+    PositionalEmbedding,
+    SinusoidalPositionalEmbedding,
+)
 
-def get_index_embedding(indices, emb_dim, max_len=2048):
-    """Creates sine / cosine positional embeddings from a prespecified indices.
 
-    Args:
-        indices: offsets of size [..., num_tokens] of type integer
-        emb_dim: dimension of the embeddings to create
-        max_len: maximum length
+# def get_index_embedding(indices, emb_dim, max_len=2048):
+#     """Creates sine / cosine positional embeddings from a prespecified indices.
 
-    Returns:
-        positional embedding of shape [..., num_tokens, emb_dim]
-    """
-    K = torch.arange(emb_dim // 2, device=indices.device)
-    pos_embedding_sin = torch.sin(
-        indices[..., None] * math.pi / (max_len ** (2 * K[None] / emb_dim))
-    ).to(indices.device)
-    pos_embedding_cos = torch.cos(
-        indices[..., None] * math.pi / (max_len ** (2 * K[None] / emb_dim))
-    ).to(indices.device)
-    pos_embedding = torch.cat([pos_embedding_sin, pos_embedding_cos], axis=-1)
-    return pos_embedding
+#     Args:
+#         indices: offsets of size [..., num_tokens] of type integer
+#         emb_dim: dimension of the embeddings to create
+#         max_len: maximum length
+
+#     Returns:
+#         positional embedding of shape [..., num_tokens, emb_dim]
+#     """
+#     K = torch.arange(emb_dim // 2, device=indices.device)
+#     pos_embedding_sin = torch.sin(
+#         indices[..., None] * math.pi / (max_len ** (2 * K[None] / emb_dim))
+#     ).to(indices.device)
+#     pos_embedding_cos = torch.cos(
+#         indices[..., None] * math.pi / (max_len ** (2 * K[None] / emb_dim))
+#     ).to(indices.device)
+#     pos_embedding = torch.cat([pos_embedding_sin, pos_embedding_cos], axis=-1)
+#     return pos_embedding
 
 
 class TransformerDecoder(nn.Module):
@@ -52,6 +57,9 @@ class TransformerDecoder(nn.Module):
         norm_first: bool = True,
         bias: bool = True,
         num_layers: int = 6,
+        max_num_atoms: int = 512,
+        index_embedding: PositionalEmbedding = SinusoidalPositionalEmbedding(),
+
     ):
         super().__init__()
 
@@ -83,6 +91,8 @@ class TransformerDecoder(nn.Module):
         self.frac_coords_head = nn.Linear(d_model, 3, bias=False)
         self.lattice_head = nn.Linear(d_model, 6, bias=False)
 
+        self.index_embedding = index_embedding
+
     @property
     def hidden_dim(self) -> int:
         return self.d_model
@@ -101,11 +111,9 @@ class TransformerDecoder(nn.Module):
         x = encoded_batch["x"]
 
         # Positional embedding
-        x += get_index_embedding(encoded_batch["token_idx"], self.d_model)
-        breakpoint()
+        x += self.index_embedding(encoded_batch["token_idx"], self.d_model)
         # Convert from PyG batch to dense batch with padding
         x, token_mask = to_dense_batch(x, encoded_batch["batch"])
-        breakpoint() # x2[0,:,0] encoded_batch["token_idx"][:20]
         torch.unique(encoded_batch["token_idx"])
         torch.unique(encoded_batch["token_idx"], return_counts=True)
         # Transformer forward pass

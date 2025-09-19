@@ -102,10 +102,12 @@ class TransformerDecoder(nn.Module):
 
         # Positional embedding
         x += get_index_embedding(encoded_batch["token_idx"], self.d_model)
-
+        breakpoint()
         # Convert from PyG batch to dense batch with padding
         x, token_mask = to_dense_batch(x, encoded_batch["batch"])
-
+        breakpoint() # x2[0,:,0] encoded_batch["token_idx"][:20]
+        torch.unique(encoded_batch["token_idx"])
+        torch.unique(encoded_batch["token_idx"], return_counts=True)
         # Transformer forward pass
         x = self.transformer.forward(x, src_key_padding_mask=(~token_mask))
         x = x[token_mask]

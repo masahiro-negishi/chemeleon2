@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=Torch_Distributed
 #SBATCH --nodes=1
-#SBATCH --gpus=2
-#SBATCH --ntasks-per-node=2
+#SBATCH --gpus=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --time=01:00:00
 # SBATCH --array=0-7%1
 
@@ -49,7 +49,7 @@ echo "Logger PID: $!"
 #     --gpus=2 \
 #     --ntasks-per-node=1 \
 #     --gpus-per-node=2 \
-  srun  python -u src/train_vae.py \
+python -u src/train_vae.py \
         experiment=mp_40/vae_dng.yaml \
         paths.data_dir=/home/u5bd/lleon.u5bd/chemeleon/data \
     trainer.devices=-1\

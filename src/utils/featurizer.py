@@ -7,7 +7,7 @@ from src.data.dataset_util import pmg_structure_to_pyg_data
 from src.vae_module.vae_module import VAEModule
 from src.utils.scatter import scatter_mean, scatter_sum
 
-DEFAULT_MODEL_PATH = "ckpts/mp_20/vae/dng_m4owq4i5_v0.ckpt"  # TODO: update this path
+DEFAULT_MODEL_PATH = "benchmarks/assets/dng_m4owq4i5_v0.ckpt"  # TODO: update this path
 
 
 def featurize(

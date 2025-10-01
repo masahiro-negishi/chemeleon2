@@ -1,0 +1,15 @@
+_target_: torch.optim.lr_scheduler.OneCycleLR
+
+_partial_: true
+max_lr: 5e-4
+total_steps: ${trainer.max_epochs}
+pct_start: 0.02  # fraction of cycle spent warming up
+
+
+# scheduler = torch.optim.lr_scheduler.OneCycleLR(
+#     optimizer,
+#     max_lr=1e-3,
+#     total_steps=total_training_steps * len(dataloader),
+#     pct_start=0.1,  # fraction of cycle spent warming up
+#     # anneal_strategy="linear",
+# )

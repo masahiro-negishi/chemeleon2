@@ -9,8 +9,8 @@ defaults:
   - override /paths: default
   - override /hydra: default
 
-trainer:
-  max_epochs: 10000
+# trainer:
+#   max_epochs: 400
 
 vae_module:
   atom_type_predict: true

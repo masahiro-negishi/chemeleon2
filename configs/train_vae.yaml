@@ -10,8 +10,9 @@ defaults:
   - _self_
   - experiment: null
 
+
 trainer:
-  max_epochs: 1000
+  max_epochs: 400 
 
 data:
   mace_features: False

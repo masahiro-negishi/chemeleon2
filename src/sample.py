@@ -15,13 +15,13 @@ DEFAULT_MODEL_PATH = "ckpts/ldm/kl_1e-5_last/model.ckpt"  # TODO: update this pa
 
 
 def sample(
-    num_samples: int = 100,
+    num_samples: int = 10000, # change to 10000
     batch_size: int = 2000,
     compositions: list = None,
     text_prompts: list = None,
     num_atom_distribution: str = "mp-20",
     model_path: str = None,
-    output_dir: str = "outputs",
+    output_dir: str = "outputs", # change !!
     sampler: str = "ddim",
     sampling_steps: int = 50,
     cfg_scale: float = 2.0,  # Only used if use_cfg=True

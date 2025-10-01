@@ -50,7 +50,7 @@ echo "Logger PID: $!"
 #     --ntasks-per-node=1 \
 #     --gpus-per-node=2 \
 python -u src/train_ldm.py \
-        experiment=mp_40/ldm_null.yaml \
+        experiment=mp_20/ldm_null.yaml \
         paths.data_dir=/scratch/u5bd/lleon.u5bd/chemeleon2/data \
     trainer.devices=-1\
     "$@" \

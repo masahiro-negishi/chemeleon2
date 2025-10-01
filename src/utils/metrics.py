@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-import amd
+# import amd
 from scipy.linalg import sqrtm
 from ase.calculators.calculator import Calculator
 from pymatgen.analysis.structure_matcher import StructureMatcher

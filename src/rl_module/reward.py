@@ -55,7 +55,7 @@ class ReinforceReward(torch.nn.Module):
                 progress_bar=False,
                 reference_dataset=reference_dataset,
             )
-            reward_fn = partial(reward_dng, m=m)
+            reward_fn = partial(reward_dng, m=m, **kwargs)
         elif self.reward_type == RewardType.CSP:
             m = Metrics(
                 metrics=[
@@ -65,7 +65,7 @@ class ReinforceReward(torch.nn.Module):
                 progress_bar=False,
                 reference_dataset=reference_dataset,
             )
-            reward_fn = partial(reward_csp, m=m)
+            reward_fn = partial(reward_csp, m=m, **kwargs)
         elif self.reward_type == RewardType.CUSTOM:
             reward_fn = custom_reward
         elif self.reward_type == RewardType.BANDGAP:
@@ -119,10 +119,11 @@ class ReinforceReward(torch.nn.Module):
         return rewards
 
 
-def reward_dng(batch_gen: CrystalBatch, m: Metrics) -> torch.Tensor:
+def reward_dng(batch_gen: CrystalBatch, m: Metrics, **kwargs) -> torch.Tensor:
     gen_structures = batch_gen.to_structure()
     with torch.enable_grad():
         results = m.compute(gen_structures=gen_structures)
+
     # 1. Unique and Novel Reward
     ref_structures = m._reference_structures
     ref_structures_by_formula = defaultdict(list)
@@ -181,10 +182,10 @@ def reward_dng(batch_gen: CrystalBatch, m: Metrics) -> torch.Tensor:
 
     # Total rewards
     total_rewards = (
-        1.0 * r_creativity
-        + 1.0 * r_energy
-        + 0.1 * r_structure_diversity
-        + 1.0 * r_composition_diversity
+        kwargs.get("weight_r_creativity", 1.0) * r_creativity
+        + kwargs.get("weight_r_energy", 1.0) * r_energy
+        + kwargs.get("weight_r_structure_diversity", 0.1) * r_structure_diversity
+        + kwargs.get("weight_r_composition_diversity", 1.0) * r_composition_diversity
     )
     return total_rewards
 

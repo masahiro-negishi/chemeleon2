@@ -54,7 +54,28 @@ Check TOML..........................................Passed
 Check JSON..........................................Passed
 ```
 
-### 4. Make a Test Code Change
+### 4. Run Baseline Tests (CRITICAL FIRST STEP)
+
+**IMPORTANT**: Before applying formatting changes, verify code works correctly.
+
+```bash
+pytest tests/baseline/ -v
+```
+
+**Expected output**:
+```
+tests/baseline/test_vae_module.py::test_vae_instantiation PASSED
+tests/baseline/test_ldm_module.py::test_ldm_instantiation PASSED
+tests/baseline/test_rl_module.py::test_rl_instantiation PASSED
+tests/baseline/test_data_loading.py::test_dataloader_batching PASSED
+==================== 4 passed in 2.35s ====================
+```
+
+**If tests fail**: Fix code issues BEFORE proceeding with formatting.
+
+**Rationale**: Baseline tests ensure code functionality is preserved during formatting changes. This prevents silent regressions.
+
+### 5. Make a Test Code Change
 
 Create a test file with intentional violations:
 
@@ -66,7 +87,7 @@ def hello(  ):
 PYEOF
 ```
 
-### 5. Attempt to Commit
+### 6. Attempt to Commit
 
 ```bash
 git add test_formatting.py
@@ -90,7 +111,7 @@ test_formatting.py:2:6: E225 missing whitespace around operator
 test_formatting.py:3:11: Q000 Single quotes found but double quotes preferred
 ```
 
-### 6. Fix Violations (Manual or AI Agent)
+### 7. Fix Violations (Manual or AI Agent)
 
 **Option A: Manual Fix**
 ```python
@@ -103,7 +124,7 @@ def hello():
 Ask Claude/Codex/Gemini:
 > "Fix these Ruff violations in test_formatting.py: [paste errors]"
 
-### 7. Re-commit Successfully
+### 8. Re-commit Successfully
 
 ```bash
 git add test_formatting.py
@@ -120,7 +141,7 @@ Ruff Lint Check.....................................Passed
  1 file changed, 3 insertions(+)
 ```
 
-### 8. Push and Open PR
+### 9. Push and Open PR
 
 ```bash
 git push origin 001-this-repository-was
@@ -128,7 +149,7 @@ git push origin 001-this-repository-was
 
 Open Pull Request on GitHub.
 
-### 9. Verify CI Runs
+### 10. Verify CI Runs
 
 Check GitHub Actions tab on your PR.
 
@@ -139,7 +160,7 @@ Check GitHub Actions tab on your PR.
 - ✓ Ruff lint check
 - ✓ pytest
 
-### 10. Clean Up Test File
+### 11. Clean Up Test File
 
 ```bash
 git rm test_formatting.py

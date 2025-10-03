@@ -1,73 +1,73 @@
+
 # Implementation Plan: Development Workflow Standards for Team Collaboration
 
-**Branch**: `001-this-repository-was` | **Date**: 2025-10-03 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-this-repository-was` | **Date**: 2025-10-03 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/001-this-repository-was/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
 1. Load feature spec from Input path
-   → Feature spec loaded successfully
+   → If not found: ERROR "No feature spec at {path}"
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
-   → Project Type: Single Python project (machine learning framework)
-   → Structure Decision: Single project with src/ and tests/
-3. Fill the Constitution Check section
-   → Constitution template is placeholder - no specific gates defined
-4. Evaluate Constitution Check section
-   → No violations detected
-   → ✅ Progress Tracking: Initial Constitution Check PASS
+   → Detect Project Type from file system structure or context (web=frontend+backend, mobile=app+api)
+   → Set Structure Decision based on project type
+3. Fill the Constitution Check section based on the content of the constitution document.
+4. Evaluate Constitution Check section below
+   → If violations exist: Document in Complexity Tracking
+   → If no justification possible: ERROR "Simplify approach first"
+   → Update Progress Tracking: Initial Constitution Check
 5. Execute Phase 0 → research.md
-   → All technical decisions clarified in spec
-6. Execute Phase 1 → contracts, data-model.md, quickstart.md, CLAUDE.md
-   → Design artifacts generated
+   → If NEEDS CLARIFICATION remain: ERROR "Resolve unknowns"
+6. Execute Phase 1 → contracts, data-model.md, quickstart.md, agent-specific template file (e.g., `CLAUDE.md` for Claude Code, `.github/copilot-instructions.md` for GitHub Copilot, `GEMINI.md` for Gemini CLI, `QWEN.md` for Qwen Code, or `AGENTS.md` for all other agents).
 7. Re-evaluate Constitution Check section
-   → No new violations
-   → ✅ Progress Tracking: Post-Design Constitution Check PASS
-8. Plan Phase 2 → Task generation approach described
+   → If new violations: Refactor design, return to Phase 1
+   → Update Progress Tracking: Post-Design Constitution Check
+8. Plan Phase 2 → Describe task generation approach (DO NOT create tasks.md)
 9. STOP - Ready for /tasks command
 ```
 
-**IMPORTANT**: The /plan command STOPS at step 9. Phases 2-4 are executed by other commands:
+**IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
 - Phase 2: /tasks command creates tasks.md
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-
-Establish development workflow standards to transition chemeleon2 (a generative ML framework for crystal structure prediction) from solo development to team collaboration. Implement automated code formatting, linting, and quality checks using Ruff (Black-compatible formatter + strict linter) with pre-commit hooks that enforce standards locally and GitHub Actions CI/CD that validates all Pull Requests before merge. Apply standards retroactively to entire existing codebase and provide comprehensive documentation for team onboarding.
-
-**Primary Requirement**: Ensure all code commits meet strict formatting and quality standards through automated validation
-**Technical Approach**: Ruff for formatting/linting, pre-commit framework for local hooks, GitHub Actions for CI enforcement, comprehensive documentation for team adoption
+Establish development workflow standards for team collaboration by implementing code formatting (Ruff Format), comprehensive linting (Ruff with strict rules), pre-commit hooks (blocking commits on failures), and CI/CD validation (GitHub Actions). **Critical priority**: Create baseline tests FIRST to verify code functionality before and after applying formatting changes, ensuring no regressions during retroactive code reformatting.
 
 ## Technical Context
-
-**Language/Version**: Python 3.11+
-**Primary Dependencies**: Ruff (formatter + linter), pre-commit framework, GitHub Actions
-**Storage**: N/A (configuration files only)
-**Testing**: pytest (CI only, not in pre-commit hooks)
-**Target Platform**: Linux/macOS development environments, GitHub-hosted runners for CI
-**Project Type**: Single Python project (ML framework)
-**Performance Goals**: Pre-commit validation < 15 seconds for developer workflow
-**Constraints**: 88-character line length (Black default), strict linting rules (docstrings, type hints, complexity limits, security patterns)
-**Scale/Scope**: Existing codebase with Python, YAML, TOML, JSON files; team of multiple developers; retroactive application to all existing code
+**Language/Version**: Python 3.11+ (already specified in pyproject.toml)
+**Primary Dependencies**: Ruff (formatter + linter), pre-commit framework, pytest, GitHub Actions
+**Storage**: Configuration files (.toml, .yaml), git repository
+**Testing**: pytest (baseline tests before formatting, smoke tests for ML modules)
+**Target Platform**: Linux development environments, GitHub CI/CD runners
+**Project Type**: Single Python project (ML/scientific computing - VAE, LDM, RL modules)
+**Performance Goals**: Pre-commit validation < 15 seconds, CI/CD pipeline < 5 minutes
+**Constraints**: Must not break existing functionality during retroactive formatting
+**Scale/Scope**: ~45 Python files in src/, team collaboration workflow for 2+ developers
+**User-Specified Priority**: Create baseline tests FIRST to validate code works before and after formatting changes
 
 ## Constitution Check
-
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Status**: ✅ PASS
+**Note**: Constitution file is a template placeholder. Applying standard software engineering principles:
 
-The constitution template is a placeholder with no specific project principles defined. This feature introduces foundational development standards and does not violate any architectural constraints. The approach is simple and follows industry best practices:
-- Ruff: Single tool for formatting + linting (simpler than separate Black + flake8/pylint)
-- pre-commit: Standard framework for git hooks
-- GitHub Actions: Standard CI/CD platform already in use
-- Documentation-first for team adoption
+✅ **Test-First Development**: Baseline tests created BEFORE formatting changes (user-specified requirement)
+✅ **Non-Breaking Changes**: Formatting/linting are code style changes only, not functional changes
+✅ **Automated Validation**: Pre-commit hooks and CI/CD ensure quality gates
+✅ **Documentation**: CONTRIBUTING.md provides clear setup and usage guidance
+✅ **Simplicity**: Using Ruff (single tool for format + lint) instead of multiple tools
+✅ **Team Collaboration**: One-command setup for new developers
 
-No complexity justifications needed.
+**Potential Concerns**:
+- Retroactive formatting on existing code could cause merge conflicts → Mitigated by coordinating with team on timing
+- No existing tests → Addressed by creating baseline tests FIRST before any formatting
+
+**Status**: PASS - No constitutional violations. Proceeding to Phase 0.
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/001-this-repository-was/
+specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
@@ -78,154 +78,151 @@ specs/001-this-repository-was/
 
 ### Source Code (repository root)
 ```
-# Single project structure (existing)
+# Existing structure (ML/scientific Python project)
 src/
-├── models/              # ML models (existing)
-├── services/            # Services (existing)
-├── utils/               # Utilities (existing)
-└── lib/                 # Library code (existing)
+├── vae_module/           # VAE models
+├── ldm_module/           # Latent diffusion models
+├── rl_module/            # Reinforcement learning
+├── data/                 # Data loading and processing
+├── utils/                # Utilities
+└── *.py                  # Training scripts (train_vae.py, train_ldm.py, etc.)
 
+# NEW: Test structure to be created (Phase 1)
 tests/
-├── contract/            # Contract tests (new for this feature)
-├── integration/         # Integration tests (existing)
-└── unit/                # Unit tests (existing)
+├── baseline/             # Smoke tests to validate pre/post formatting
+│   ├── test_vae_module.py
+│   ├── test_ldm_module.py
+│   ├── test_rl_module.py
+│   └── test_data_loading.py
+├── integration/          # Integration tests (future)
+└── unit/                 # Unit tests (future)
 
-# New configuration files at repository root
-.pre-commit-config.yaml  # Pre-commit hook configuration
-pyproject.toml           # Ruff configuration (extend existing)
+# NEW: Configuration files (Phase 1)
+pyproject.toml            # Ruff config (extend existing)
+.pre-commit-config.yaml   # Pre-commit hooks
 .github/
 └── workflows/
-    └── ci.yml           # GitHub Actions workflow (new)
+    └── ci.yml            # CI/CD pipeline
 
-# New documentation at repository root
-CONTRIBUTING.md          # Developer onboarding guide (new)
+# NEW: Documentation (Phase 1)
+CONTRIBUTING.md           # Developer setup guide
 ```
 
-**Structure Decision**: Single Python project structure. Configuration files added to repository root. GitHub Actions workflow added to `.github/workflows/`. Documentation added as top-level CONTRIBUTING.md. No new src/ structure needed - this feature adds development tooling only.
+**Structure Decision**: Single Python project (ML/scientific computing). Using existing `src/` structure with new `tests/` directory for baseline validation. Configuration files at repository root following Python community standards.
 
 ## Phase 0: Outline & Research
+1. **Extract unknowns from Technical Context** above:
+   - For each NEEDS CLARIFICATION → research task
+   - For each dependency → best practices task
+   - For each integration → patterns task
 
-**Status**: ✅ COMPLETE
+2. **Generate and dispatch research agents**:
+   ```
+   For each unknown in Technical Context:
+     Task: "Research {unknown} for {feature context}"
+   For each technology choice:
+     Task: "Find best practices for {tech} in {domain}"
+   ```
 
-All technical decisions were resolved during the `/clarify` workflow. No unknowns remain. See `research.md` for consolidated findings.
+3. **Consolidate findings** in `research.md` using format:
+   - Decision: [what was chosen]
+   - Rationale: [why chosen]
+   - Alternatives considered: [what else evaluated]
 
-**Key Decisions from Clarifications**:
-1. **Formatter**: Ruff Format (Black-compatible, 88 chars, Python 3.11+)
-2. **Linter**: Ruff with strict rules (docstrings, type hints, complexity, security)
-3. **File Types**: .py, .yaml, .toml, .json
-4. **Enforcement**: Block commits on violations (manual or AI-agent fixes)
-5. **Hook Installation**: One-command setup script
-6. **Performance**: < 15 seconds validation time
-7. **Testing**: pytest in CI only (not pre-commit)
-8. **CI/CD**: GitHub Actions with required status checks
-9. **Documentation**: Full CONTRIBUTING.md with AI agent examples
-10. **Retroactive**: Apply to all existing code with conflict mitigation
-11. **AI Integration**: Support Claude, Codex, Gemini, etc. for auto-fixing
-12. **Line Length**: 88 characters (Black default)
-
-**Output**: research.md created
+**Output**: research.md with all NEEDS CLARIFICATION resolved
 
 ## Phase 1: Design & Contracts
+*Prerequisites: research.md complete*
 
-**Status**: ✅ COMPLETE
+1. **Extract entities from feature spec** → `data-model.md`:
+   - Entity name, fields, relationships
+   - Validation rules from requirements
+   - State transitions if applicable
 
-### Entities Extracted from Spec
+2. **Generate API contracts** from functional requirements:
+   - For each user action → endpoint
+   - Use standard REST/GraphQL patterns
+   - Output OpenAPI/GraphQL schema to `/contracts/`
 
-See `data-model.md` for complete entity definitions. Key entities:
+3. **Generate contract tests** from contracts:
+   - One test file per endpoint
+   - Assert request/response schemas
+   - Tests must fail (no implementation yet)
 
-1. **Formatting Rules**: Ruff configuration with Black-compatible settings
-2. **Linting Rules**: Strict Ruff rule sets
-3. **Pre-commit Configuration**: Hook definitions and execution order
-4. **CI/CD Pipeline**: GitHub Actions workflow definition
-5. **Developer Documentation**: CONTRIBUTING.md structure
-6. **Developer Environment Setup**: Installation and setup procedures
+4. **Extract test scenarios** from user stories:
+   - Each story → integration test scenario
+   - Quickstart test = story validation steps
 
-### Contracts Generated
+5. **Update agent file incrementally** (O(1) operation):
+   - Run `.specify/scripts/bash/update-agent-context.sh claude`
+     **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
+   - If exists: Add only NEW tech from current plan
+   - Preserve manual additions between markers
+   - Update recent changes (keep last 3)
+   - Keep under 150 lines for token efficiency
+   - Output to repository root
 
-See `contracts/` directory for:
-- Ruff configuration schema (pyproject.toml structure)
-- Pre-commit config schema (.pre-commit-config.yaml structure)
-- GitHub Actions workflow schema (ci.yml structure)
-- Setup script interface (single-command installation)
-
-### Contract Tests
-
-Contract tests created in `tests/contract/`:
-- `test_ruff_config.py`: Validates Ruff configuration exists and is valid
-- `test_precommit_config.py`: Validates pre-commit configuration structure
-- `test_github_actions.py`: Validates CI workflow configuration
-- `test_setup_script.py`: Validates setup script functionality
-
-**Note**: These tests currently FAIL (no implementation yet) - this is expected in TDD workflow.
-
-### Quickstart Created
-
-See `quickstart.md` for developer onboarding flow:
-1. Clone repository
-2. Run setup command
-3. Make code change
-4. Commit (pre-commit runs automatically)
-5. Open PR (CI validates)
-6. Use AI agent to fix issues if needed
-
-### Agent Context Updated
-
-CLAUDE.md updated with:
-- Ruff configuration patterns
-- Pre-commit hook best practices
-- GitHub Actions workflow structure
-- Recent changes: Development workflow standards implementation
-
-**Output**: data-model.md, contracts/*, failing tests, quickstart.md, CLAUDE.md
+**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
 
 ## Phase 2: Task Planning Approach
-
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
-**Task Generation Strategy**:
-1. Load `.specify/templates/tasks-template.md` as base
-2. Generate tasks from Phase 1 design docs in dependency order
-3. Group tasks by component:
-   - Ruff configuration
-   - Pre-commit hooks
-   - GitHub Actions CI
-   - Setup automation
-   - Documentation
-   - Retroactive formatting
+**Task Generation Strategy** (Test-First Priority):
+1. **Baseline Test Creation Tasks** (CRITICAL - Must come first)
+   - Create `tests/` directory structure
+   - Write baseline smoke tests for VAE, LDM, RL modules
+   - Write overfit-single-batch test
+   - Write data loading tests
+   - Configure pytest in pyproject.toml
+   - **Run tests and verify green** → Establishes functional baseline
 
-**Ordering Strategy** (TDD + dependency order):
-1. **Tests First**: All contract tests (parallel [P])
-2. **Configuration**: Ruff config → Pre-commit config → CI workflow
-3. **Automation**: Setup script
-4. **Documentation**: CONTRIBUTING.md, inline config comments
-5. **Retroactive**: Format existing codebase
-6. **Validation**: Verify all tests pass, CI works end-to-end
+2. **Configuration Tasks**
+   - Configure Ruff in pyproject.toml
+   - Create .pre-commit-config.yaml
+   - Create GitHub Actions workflow
+   - Create setup script (setup-dev.sh)
 
-**Estimated Task Breakdown**:
-- 4 contract test tasks [P]
-- 3 configuration tasks (sequential - Ruff → pre-commit → CI)
-- 1 setup script task
-- 2 documentation tasks [P]
-- 1 retroactive formatting task (depends on all config)
-- 1 end-to-end validation task
+3. **Application Tasks** (Only after baseline tests pass)
+   - Apply Ruff formatting to codebase (`ruff format .`)
+   - Apply Ruff fixes (`ruff check --fix .`)
+   - **Re-run baseline tests** → Verify no regressions
+   - Manual fixes for remaining violations
 
-**Total Estimated**: 12-15 numbered, ordered tasks in tasks.md
+4. **Documentation Tasks**
+   - Create CONTRIBUTING.md
+   - Update CLAUDE.md (via script)
+
+**Ordering Strategy**:
+- **TEST-FIRST**: Baseline tests BEFORE any formatting changes
+- **Verification loops**: Test → Format → Test again
+- **Dependency order**: Tests → Config → Application → Docs
+- **Mark [P]** for parallel execution where safe (e.g., independent test files)
+
+**Critical Success Factor**:
+Tests must pass in step 1 and step 3. If step 3 tests fail, formatting broke something - must fix before proceeding.
+
+**Estimated Output**: 15-20 numbered, strictly ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
 ## Phase 3+: Future Implementation
-
 *These phases are beyond the scope of the /plan command*
 
-**Phase 3**: Task execution (/tasks command creates tasks.md)
-**Phase 4**: Implementation (execute tasks.md following TDD principles)
-**Phase 5**: Validation (all tests pass, CI validates PRs, documentation complete)
+**Phase 3**: Task execution (/tasks command creates tasks.md)  
+**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
+**Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
+*Fill ONLY if Constitution Check has violations that must be justified*
 
-*No complexity deviations from constitution - section left empty*
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+
 
 ## Progress Tracking
+*This checklist is updated during execution flow*
 
 **Phase Status**:
 - [x] Phase 0: Research complete (/plan command)
@@ -238,8 +235,8 @@ CLAUDE.md updated with:
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented (none)
+- [x] All NEEDS CLARIFICATION resolved (no unknowns in Technical Context)
+- [x] Complexity deviations documented (none - follows TDD principle)
 
 ---
-*Based on Constitution template - See `/memory/constitution.md`*
+*Based on Constitution v2.1.1 - See `/memory/constitution.md`*

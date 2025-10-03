@@ -320,9 +320,92 @@ This document consolidates research findings and technical decisions for impleme
 
 ---
 
+## Decision 12: Baseline Testing Strategy (CRITICAL)
+
+**Decision**: Create baseline tests BEFORE applying formatting changes
+**Rationale**:
+- **User Insight**: "Before applying lint/format updates, shouldn't we test that the code works properly first?"
+- This follows Test-Driven Development principles
+- Prevents silent regressions during retroactive formatting
+- No existing tests in `tests/` directory - must create baseline first
+
+**Baseline Test Types**:
+
+1. **Smoke Tests**: Quick sanity checks without full training
+   - Model instantiation tests (VAE, LDM, RL modules)
+   - Forward pass shape validation
+   - DataLoader batching verification
+
+2. **Critical Validation Test**: Overfit Single Batch
+   - As per Andrej Karpathy: "If you can't overfit on a tiny batch, things are definitely broken"
+   - Train model on single batch for 100-2000 iterations
+   - Assert final_loss < initial_loss * 0.1
+   - This catches gradient bugs, incorrect loss functions, broken backprop
+
+3. **Data Pipeline Tests**:
+   - Verify dataloader produces correct tensor shapes (BxCxHxW)
+   - Verify labels match image count
+   - Verify dtypes (float32 for images, long for labels)
+
+**pytest Configuration**:
+```toml
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = ["-ra", "-q", "--strict-markers"]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "smoke: quick sanity checks for core functionality",
+    "baseline: baseline validation tests",
+    "unit: isolated component tests",
+    "integration: integration tests",
+    "slow: tests that take >1s",
+]
+```
+
+**Test Directory Structure**:
+```
+tests/
+├── conftest.py              # Shared fixtures (device, dummy datasets)
+├── baseline/                # Baseline validation (run before/after formatting)
+│   ├── test_vae_module.py
+│   ├── test_ldm_module.py
+│   ├── test_rl_module.py
+│   └── test_data_loading.py
+├── integration/             # Future integration tests
+└── unit/                    # Future unit tests
+```
+
+**Implementation Workflow**:
+1. ✅ Research complete (including pytest best practices)
+2. → Create `tests/` structure with baseline tests
+3. → Run tests and verify they pass (green baseline)
+4. → Apply Ruff formatting to codebase (`ruff format .`)
+5. → Re-run tests and verify still green (no regressions)
+6. → Commit formatted code with confidence
+
+**Key Pytest Patterns for ML**:
+- Use `fast_dev_run=True` for PyTorch Lightning smoke tests
+- Use `torch.testing.assert_close()` for tensor comparisons (not `==`)
+- Set random seeds in fixtures for reproducibility
+- Exclude pytest from pre-commit hooks (too slow, run in CI only)
+- Use pytest markers to organize test types (`pytest -m smoke`)
+
+**Alternatives Considered**:
+- **No baseline tests**: Too risky - formatting might break code silently
+- **Manual validation**: Not reproducible or scalable for team
+- **Full test suite first**: Too time-consuming for initial validation
+
+**References**:
+- pytest documentation: https://docs.pytest.org/
+- PyTorch Lightning fast_dev_run: https://lightning.ai/docs/pytorch/stable/common/trainer.html#fast-dev-run
+- ML testing best practices: https://madewithml.com/courses/mlops/testing/
+
+---
+
 ## Open Questions (if any)
 
-**None** - All questions resolved through `/clarify` workflow.
+**None** - All questions resolved through `/clarify` workflow + user insight on baseline testing.
 
 ---
 

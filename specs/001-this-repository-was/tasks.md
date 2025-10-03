@@ -53,7 +53,7 @@
   - Create `tests/unit/` subdirectory (placeholder for future)
   - Create `tests/conftest.py` for shared fixtures
 
-- [ ] **T002** Configure pytest in pyproject.toml
+- [x] **T002** Configure pytest in pyproject.toml
   - Add `[tool.pytest.ini_options]` section to `pyproject.toml`
   - Set `minversion = "7.0"`
   - Set `testpaths = ["tests"]`
@@ -244,9 +244,11 @@
     - If errors found, invokes Claude Code CLI with error messages
     - Applies Claude's fixes automatically
     - Re-runs Ruff validation
-    - Returns exit code 0 if fixed, 1 if still failing
+    - **NEW: Runs `pytest tests/baseline/ -m smoke --maxfail=1` to verify fixes didn't break functionality**
+    - **NEW: If tests fail, rolls back changes and exits with code 1**
+    - Returns exit code 0 if fixed and tests pass, 1 if still failing or tests fail
   - Make script executable: `chmod +x .git-hooks/claude-autofix.sh`
-  - **Dependency**: Requires T019 (clean baseline)
+  - **Dependency**: Requires T019 (clean baseline), T007 (baseline tests exist)
 
 - [ ] **T024 [P]** Create Claude agent configuration in `.claude/hooks/pre-commit-autofix.md`
   - Create `.claude/hooks/` directory
@@ -272,10 +274,11 @@
     - Checks if Claude Code CLI is installed
     - Runs pre-commit checks
     - If failures, invokes `.git-hooks/claude-autofix.sh`
+    - **NEW: Displays test results if Claude made changes**
     - Shows before/after diff
     - Asks user to confirm changes
   - Make executable: `chmod +x scripts/claude-fix.sh`
-  - **Dependency**: Requires T023
+  - **Dependency**: Requires T023, T007 (baseline tests)
 
 ---
 
@@ -328,11 +331,11 @@ T008-T011 → T021 (contract tests)
 T019, T021 → T022 (verify CI)
 
 Claude Auto-Fix Phase:
-T019 → T023 (Claude hook script) ┐
-T019 → T024 (Claude config)      ├─ [Parallel - different files]
-                                 │
+T019, T007 → T023 (Claude hook script) ┐
+T019 → T024 (Claude config)            ├─ [Parallel - different files]
+                                       │
 T009, T023, T024 → T025 (update pre-commit)
-T023 → T026 (wrapper script)
+T023, T007 → T026 (wrapper script)
 
 Documentation:
 T020, T026 → T027 (CONTRIBUTING.md)

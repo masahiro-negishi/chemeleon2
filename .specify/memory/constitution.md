@@ -1,26 +1,23 @@
 <!--
 Sync Impact Report (Constitution Update)
-Version: 1.0.0 → 2.0.0
-Rationale: Initial constitution establishment for Chameleon2 project (MAJOR bump)
+Version: 2.0.0 → 2.0.1
+Rationale: Clarification of test execution enforcement scope (PATCH bump)
 
 Modified Principles:
-- All principles established from template (new baseline)
+- Principle V: Clarified that CI/CD enforces comprehensive test execution, while pre-commit hooks focus on fast feedback (formatting/linting)
 
-Added Sections:
-- Core Principles (5 principles)
-- Testing & Quality Standards
-- Development Workflow
-- Governance
+Added Sections: None
 
 Removed Sections: None
 
 Templates Requiring Updates:
-- ✅ .specify/templates/plan-template.md - Reviewed, constitution checks align
-- ✅ .specify/templates/spec-template.md - Reviewed, scope alignment maintained
-- ✅ .specify/templates/tasks-template.md - Reviewed, task categorization aligns
-- ✅ .specify/templates/agent-file-template.md - Reviewed, no agent-specific references needed
+- ✅ No template updates required - clarification only, existing implementations aligned
 
 Follow-up TODOs: None
+
+Previous Update (1.0.0 → 2.0.0):
+- Initial constitution establishment for Chameleon2 project (MAJOR bump)
+- All principles established from template (new baseline)
 -->
 
 # Chameleon2 Constitution

@@ -67,13 +67,13 @@
 
 ⚠️ **CRITICAL**: These tests establish a functional baseline to prevent silent regressions during formatting changes. All tests must be written and PASS before proceeding to Phase 3.3.
 
-- [ ] **T003 [P]** Create baseline test for VAE module in `tests/baseline/test_vae_module.py`
+- [x] **T003 [P]** Create baseline test for VAE module in `tests/baseline/test_vae_module.py`
   - Test VAE model instantiation
   - Test forward pass shape validation
   - Test overfit-single-batch capability
   - Mark with `@pytest.mark.smoke` and `@pytest.mark.baseline`
 
-- [ ] **T004 [P]** Create baseline test for LDM module in `tests/baseline/test_ldm_module.py`
+- [x] **T004 [P]** Create baseline test for LDM module in `tests/baseline/test_ldm_module.py`
   - Test LDM model instantiation
   - Test forward pass shape validation
   - Test overfit-single-batch capability

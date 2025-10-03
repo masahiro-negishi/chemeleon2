@@ -79,7 +79,7 @@ def dummy_crystal_batch(device):
 
             # Generate lattice parameters
             lengths = torch.rand((1, 3)) * 5 + 5  # Between 5-10 Angstroms
-            lengths_scaled = lengths / (n ** (1/3))  # Scale by num_atoms^(1/3)
+            lengths_scaled = lengths / (n ** (1 / 3))  # Scale by num_atoms^(1/3)
             angles = torch.ones((1, 3)) * (torch.pi / 2)  # 90 degrees
             angles_radians = angles.clone()
 

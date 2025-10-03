@@ -44,18 +44,18 @@ def test_ruff_target_version(pyproject_data):
     """Test that target-version is set to py311."""
     ruff_config = pyproject_data["tool"]["ruff"]
     assert "target-version" in ruff_config, "target-version not configured"
-    assert (
-        ruff_config["target-version"] == "py311"
-    ), f"Expected target-version='py311', got '{ruff_config['target-version']}'"
+    assert ruff_config["target-version"] == "py311", (
+        f"Expected target-version='py311', got '{ruff_config['target-version']}'"
+    )
 
 
 def test_ruff_line_length(pyproject_data):
     """Test that line-length is set to 88 (Black-compatible)."""
     ruff_config = pyproject_data["tool"]["ruff"]
     assert "line-length" in ruff_config, "line-length not configured"
-    assert (
-        ruff_config["line-length"] == 88
-    ), f"Expected line-length=88, got {ruff_config['line-length']}"
+    assert ruff_config["line-length"] == 88, (
+        f"Expected line-length=88, got {ruff_config['line-length']}"
+    )
 
 
 def test_ruff_lint_section_exists(pyproject_data):
@@ -76,9 +76,7 @@ def test_ruff_lint_select_rules(pyproject_data):
     required_rules = ["F", "E", "W", "I", "N", "D", "UP", "ANN", "S", "B", "C90"]
 
     for rule in required_rules:
-        assert (
-            rule in select_rules
-        ), f"Required rule '{rule}' missing from select array"
+        assert rule in select_rules, f"Required rule '{rule}' missing from select array"
 
 
 def test_ruff_pydocstyle_convention(pyproject_data):
@@ -88,9 +86,9 @@ def test_ruff_pydocstyle_convention(pyproject_data):
 
     pydocstyle_config = ruff_lint["pydocstyle"]
     assert "convention" in pydocstyle_config, "convention not configured"
-    assert (
-        pydocstyle_config["convention"] == "google"
-    ), f"Expected convention='google', got '{pydocstyle_config['convention']}'"
+    assert pydocstyle_config["convention"] == "google", (
+        f"Expected convention='google', got '{pydocstyle_config['convention']}'"
+    )
 
 
 def test_ruff_mccabe_complexity(pyproject_data):
@@ -100,6 +98,6 @@ def test_ruff_mccabe_complexity(pyproject_data):
 
     mccabe_config = ruff_lint["mccabe"]
     assert "max-complexity" in mccabe_config, "max-complexity not configured"
-    assert (
-        mccabe_config["max-complexity"] == 10
-    ), f"Expected max-complexity=10, got {mccabe_config['max-complexity']}"
+    assert mccabe_config["max-complexity"] == 10, (
+        f"Expected max-complexity=10, got {mccabe_config['max-complexity']}"
+    )

@@ -37,10 +37,12 @@ def ldm_model(device):
     model = LDMModule(
         normalize_latent=False,  # Disable for simpler testing
         denoiser=denoiser,
-        augmentation=OmegaConf.create({
-            "translate": False,
-            "rotate": False,
-        }),
+        augmentation=OmegaConf.create(
+            {
+                "translate": False,
+                "rotate": False,
+            }
+        ),
         diffusion_configs={
             "timestep_respacing": "",
             "noise_schedule": "linear",
@@ -135,7 +137,9 @@ def test_ldm_loss_calculation(ldm_model, dummy_crystal_batch, device):
 
 @pytest.mark.baseline
 @pytest.mark.slow
-def test_ldm_overfit_single_batch(ldm_model, dummy_crystal_batch, seed_everything, device):
+def test_ldm_overfit_single_batch(
+    ldm_model, dummy_crystal_batch, seed_everything, device
+):
     """Test LDM can overfit on a single batch.
 
     Critical validation test following Karpathy's principle:

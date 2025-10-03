@@ -126,7 +126,7 @@ def sample(
 
         # Save generated structures
         for j, st in enumerate(gen_st_list):
-            st.to(output_path / f"sample_{i+j}_{st.formula.replace(' ', '')}.cif")
+            st.to(output_path / f"sample_{i + j}_{st.formula.replace(' ', '')}.cif")
 
     # Save generated structures in JSON format
     if save_json:

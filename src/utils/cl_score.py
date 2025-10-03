@@ -350,9 +350,9 @@ def compute_clscore(structures: list[Structure], batch_size=100, use_cuda=True):
         raise FileNotFoundError(f"Model directory not found: {model_dir}")
     # Check the number of model files
     model_files = list(model_dir.glob("checkpoint_bag_*.pth.tar"))
-    assert (
-        len(model_files) == num_models
-    ), f"Expected {num_models} model files, found {len(model_files)}."
+    assert len(model_files) == num_models, (
+        f"Expected {num_models} model files, found {len(model_files)}."
+    )
 
     for i in tqdm(range(1, num_models + 1)):
         model_path = Path(model_dir) / f"checkpoint_bag_{i}.pth.tar"

@@ -25,18 +25,18 @@ def test_setup_script_exists(setup_script_path):
 
 def test_setup_script_is_executable(setup_script_path):
     """Test that setup-dev.sh is executable."""
-    assert os.access(
-        setup_script_path, os.X_OK
-    ), "setup-dev.sh is not executable (run: chmod +x setup-dev.sh)"
+    assert os.access(setup_script_path, os.X_OK), (
+        "setup-dev.sh is not executable (run: chmod +x setup-dev.sh)"
+    )
 
 
 def test_setup_script_has_shebang(setup_script_path):
     """Test that setup-dev.sh has a proper shebang."""
     with open(setup_script_path) as f:
         first_line = f.readline().strip()
-    assert first_line.startswith(
-        "#!"
-    ), "setup-dev.sh missing shebang (should start with #!/bin/bash)"
+    assert first_line.startswith("#!"), (
+        "setup-dev.sh missing shebang (should start with #!/bin/bash)"
+    )
     assert "bash" in first_line.lower(), "setup-dev.sh should use bash"
 
 
@@ -46,12 +46,8 @@ def test_setup_script_checks_python_version(setup_script_path):
         content = f.read()
 
     # Should check Python version
-    assert (
-        "python" in content.lower()
-    ), "Script should check Python version"
-    assert (
-        "version" in content.lower()
-    ), "Script should check Python version"
+    assert "python" in content.lower(), "Script should check Python version"
+    assert "version" in content.lower(), "Script should check Python version"
 
 
 def test_setup_script_checks_uv(setup_script_path):
@@ -60,9 +56,9 @@ def test_setup_script_checks_uv(setup_script_path):
         content = f.read()
 
     assert "uv" in content.lower(), "Script should check for uv package manager"
-    assert (
-        "command -v uv" in content or "which uv" in content
-    ), "Script should check if uv is installed"
+    assert "command -v uv" in content or "which uv" in content, (
+        "Script should check if uv is installed"
+    )
 
 
 def test_setup_script_installs_precommit(setup_script_path):
@@ -70,12 +66,10 @@ def test_setup_script_installs_precommit(setup_script_path):
     with open(setup_script_path) as f:
         content = f.read()
 
-    assert (
-        "pre-commit" in content
-    ), "Script should install pre-commit framework"
-    assert (
-        "uv pip install" in content and "pre-commit" in content
-    ), "Script should use 'uv pip install' to install pre-commit"
+    assert "pre-commit" in content, "Script should install pre-commit framework"
+    assert "uv pip install" in content and "pre-commit" in content, (
+        "Script should use 'uv pip install' to install pre-commit"
+    )
 
 
 def test_setup_script_installs_ruff(setup_script_path):
@@ -84,9 +78,9 @@ def test_setup_script_installs_ruff(setup_script_path):
         content = f.read()
 
     assert "ruff" in content.lower(), "Script should install Ruff"
-    assert (
-        "uv pip install" in content and "ruff" in content.lower()
-    ), "Script should use 'uv pip install' to install Ruff"
+    assert "uv pip install" in content and "ruff" in content.lower(), (
+        "Script should use 'uv pip install' to install Ruff"
+    )
 
 
 def test_setup_script_installs_pyright(setup_script_path):
@@ -95,9 +89,9 @@ def test_setup_script_installs_pyright(setup_script_path):
         content = f.read()
 
     assert "pyright" in content.lower(), "Script should install pyright"
-    assert (
-        "uv pip install" in content and "pyright" in content.lower()
-    ), "Script should use 'uv pip install' to install pyright"
+    assert "uv pip install" in content and "pyright" in content.lower(), (
+        "Script should use 'uv pip install' to install pyright"
+    )
 
 
 def test_setup_script_runs_precommit_install(setup_script_path):
@@ -105,9 +99,7 @@ def test_setup_script_runs_precommit_install(setup_script_path):
     with open(setup_script_path) as f:
         content = f.read()
 
-    assert (
-        "pre-commit install" in content
-    ), "Script should run 'pre-commit install'"
+    assert "pre-commit install" in content, "Script should run 'pre-commit install'"
 
 
 def test_setup_script_has_exit_codes(setup_script_path):
@@ -116,9 +108,15 @@ def test_setup_script_has_exit_codes(setup_script_path):
         content = f.read()
 
     # Should have exit codes for different failure scenarios
-    assert "exit 1" in content, "Script should exit with code 1 for Python version failure"
-    assert "exit 2" in content, "Script should exit with code 2 for installation failures"
-    assert "exit 3" in content, "Script should exit with code 3 for pre-commit install failure"
+    assert "exit 1" in content, (
+        "Script should exit with code 1 for Python version failure"
+    )
+    assert "exit 2" in content, (
+        "Script should exit with code 2 for installation failures"
+    )
+    assert "exit 3" in content, (
+        "Script should exit with code 3 for pre-commit install failure"
+    )
 
 
 def test_setup_script_idempotent(setup_script_path):
@@ -143,9 +141,7 @@ def test_setup_script_idempotent(setup_script_path):
             # If mkdir -p is used, that's fine (it's idempotent)
             if cmd == "mkdir -p":
                 continue
-            pytest.fail(
-                f"Script contains potentially non-idempotent command: {cmd}"
-            )
+            pytest.fail(f"Script contains potentially non-idempotent command: {cmd}")
 
 
 def test_setup_script_creates_git_hooks(setup_script_path):
@@ -164,9 +160,11 @@ def test_setup_script_creates_git_hooks(setup_script_path):
 
     # Check if hook exists - if not, skip (setup may not have been run)
     if not precommit_hook.exists():
-        pytest.skip("pre-commit hook not found - setup-dev.sh may not have been run yet")
+        pytest.skip(
+            "pre-commit hook not found - setup-dev.sh may not have been run yet"
+        )
 
     # If hook exists, it should be executable
-    assert os.access(
-        precommit_hook, os.X_OK
-    ), "pre-commit hook exists but is not executable"
+    assert os.access(precommit_hook, os.X_OK), (
+        "pre-commit hook exists but is not executable"
+    )

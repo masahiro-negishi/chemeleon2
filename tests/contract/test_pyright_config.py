@@ -44,18 +44,18 @@ def test_pyright_type_checking_mode(pyproject_data):
     """Test that typeCheckingMode is set to 'strict'."""
     pyright_config = pyproject_data["tool"]["pyright"]
     assert "typeCheckingMode" in pyright_config, "typeCheckingMode not configured"
-    assert (
-        pyright_config["typeCheckingMode"] == "strict"
-    ), f"Expected typeCheckingMode='strict', got '{pyright_config['typeCheckingMode']}'"
+    assert pyright_config["typeCheckingMode"] == "strict", (
+        f"Expected typeCheckingMode='strict', got '{pyright_config['typeCheckingMode']}'"
+    )
 
 
 def test_pyright_python_version(pyproject_data):
     """Test that pythonVersion is set to '3.11'."""
     pyright_config = pyproject_data["tool"]["pyright"]
     assert "pythonVersion" in pyright_config, "pythonVersion not configured"
-    assert (
-        pyright_config["pythonVersion"] == "3.11"
-    ), f"Expected pythonVersion='3.11', got '{pyright_config['pythonVersion']}'"
+    assert pyright_config["pythonVersion"] == "3.11", (
+        f"Expected pythonVersion='3.11', got '{pyright_config['pythonVersion']}'"
+    )
 
 
 def test_pyright_unknown_type_warnings(pyproject_data):
@@ -71,9 +71,7 @@ def test_pyright_unknown_type_warnings(pyproject_data):
     ]
 
     for setting in warning_settings:
-        assert (
-            setting in pyright_config
-        ), f"{setting} not configured in pyright config"
-        assert (
-            pyright_config[setting] == "warning"
-        ), f"Expected {setting}='warning', got '{pyright_config[setting]}'"
+        assert setting in pyright_config, f"{setting} not configured in pyright config"
+        assert pyright_config[setting] == "warning", (
+            f"Expected {setting}='warning', got '{pyright_config[setting]}'"
+        )

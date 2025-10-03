@@ -45,18 +45,14 @@ def test_precommit_repos_exists(precommit_data):
 def test_ruff_precommit_repo_present(precommit_data):
     """Test that ruff-pre-commit repo is present."""
     repos = precommit_data["repos"]
-    ruff_repos = [
-        r for r in repos if "astral-sh/ruff-pre-commit" in r.get("repo", "")
-    ]
+    ruff_repos = [r for r in repos if "astral-sh/ruff-pre-commit" in r.get("repo", "")]
     assert len(ruff_repos) > 0, "ruff-pre-commit repo not found"
 
 
 def test_ruff_hooks_present(precommit_data):
     """Test that ruff-format and ruff hooks are present."""
     repos = precommit_data["repos"]
-    ruff_repos = [
-        r for r in repos if "astral-sh/ruff-pre-commit" in r.get("repo", "")
-    ]
+    ruff_repos = [r for r in repos if "astral-sh/ruff-pre-commit" in r.get("repo", "")]
     assert len(ruff_repos) > 0, "ruff-pre-commit repo not found"
 
     ruff_repo = ruff_repos[0]
@@ -70,9 +66,7 @@ def test_ruff_hooks_present(precommit_data):
 def test_pyright_hook_present(precommit_data):
     """Test that pyright hook is present."""
     repos = precommit_data["repos"]
-    pyright_repos = [
-        r for r in repos if "pyright" in r.get("repo", "").lower()
-    ]
+    pyright_repos = [r for r in repos if "pyright" in r.get("repo", "").lower()]
     assert len(pyright_repos) > 0, "pyright repo not found"
 
     pyright_repo = pyright_repos[0]
@@ -108,21 +102,23 @@ def test_versions_are_pinned(precommit_data):
         assert rev, f"No rev specified for repo {repo.get('repo')}"
 
         # Check that it's not 'latest' or a branch name
-        assert rev != "latest", f"Repo {repo.get('repo')} uses 'latest' - should be pinned"
-        assert not rev.startswith(
-            "HEAD"
-        ), f"Repo {repo.get('repo')} uses HEAD ref - should be pinned"
-        assert not rev.startswith(
-            "main"
-        ), f"Repo {repo.get('repo')} uses main branch - should be pinned"
-        assert not rev.startswith(
-            "master"
-        ), f"Repo {repo.get('repo')} uses master branch - should be pinned"
+        assert rev != "latest", (
+            f"Repo {repo.get('repo')} uses 'latest' - should be pinned"
+        )
+        assert not rev.startswith("HEAD"), (
+            f"Repo {repo.get('repo')} uses HEAD ref - should be pinned"
+        )
+        assert not rev.startswith("main"), (
+            f"Repo {repo.get('repo')} uses main branch - should be pinned"
+        )
+        assert not rev.startswith("master"), (
+            f"Repo {repo.get('repo')} uses master branch - should be pinned"
+        )
 
         # Valid pinned versions should start with 'v' or be a commit hash
-        assert (
-            rev.startswith("v") or re.match(r"^[0-9a-f]{7,40}$", rev)
-        ), f"Repo {repo.get('repo')} has invalid version format: {rev}"
+        assert rev.startswith("v") or re.match(r"^[0-9a-f]{7,40}$", rev), (
+            f"Repo {repo.get('repo')} has invalid version format: {rev}"
+        )
 
 
 def test_pytest_not_in_hooks(precommit_data):
@@ -133,6 +129,6 @@ def test_pytest_not_in_hooks(precommit_data):
         hooks = repo.get("hooks", [])
         for hook in hooks:
             hook_id = hook.get("id", "")
-            assert (
-                "pytest" not in hook_id.lower()
-            ), "pytest found in pre-commit hooks - should be CI only"
+            assert "pytest" not in hook_id.lower(), (
+                "pytest found in pre-commit hooks - should be CI only"
+            )

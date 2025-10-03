@@ -77,9 +77,9 @@ class PredictorModule(LightningModule):
     def calculate_loss(self, batch: CrystalBatch) -> dict:
         # Check that batch contains all target conditions
         target_conditions = list(batch.y.keys())
-        assert set(target_conditions) == set(
-            self.target_conditions
-        ), f"Expected conditions {self.target_conditions}, but got {target_conditions}"
+        assert set(target_conditions) == set(self.target_conditions), (
+            f"Expected conditions {self.target_conditions}, but got {target_conditions}"
+        )
 
         # Forward pass
         pred = self.forward(batch)  # (B, num_targets)

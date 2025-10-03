@@ -136,7 +136,7 @@ class Visualizer:
 
         # frame_layout for view_trajectory
         frame_layout = go.Layout(
-            title_text=f"Time = {frame_idx+1}",
+            title_text=f"Time = {frame_idx + 1}",
             title_x=0.5,
             title_y=0.1,
             title_xanchor="center",

@@ -51,9 +51,9 @@ class ConditionModule(nn.Module):
                     std=_stats.get("std", None),
                 )
             elif cond_type == ConditionType.CATEGORICAL.value:
-                assert (
-                    "num_classes" in kwargs
-                ), "num_classes must be provided when using CLASS condition type"
+                assert "num_classes" in kwargs, (
+                    "num_classes must be provided when using CLASS condition type"
+                )
                 self.encoders[cond_name] = CategoricalEncoder(
                     in_dim=kwargs["num_classes"],
                     hidden_dim=hidden_dim,
@@ -80,9 +80,9 @@ class ConditionModule(nn.Module):
         :returns: Embeddings of shape (B, L) during training, or (2*B, L) during inference.
         """
         target_conditions = list(batch_y.keys())
-        assert set(target_conditions) == set(
-            self.target_condition
-        ), f"Expected conditions {self.target_condition}, but got {target_conditions}"
+        assert set(target_conditions) == set(self.target_condition), (
+            f"Expected conditions {self.target_condition}, but got {target_conditions}"
+        )
 
         batch_size = len(list(batch_y.values())[0])
         if training:

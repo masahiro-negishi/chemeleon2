@@ -66,7 +66,9 @@ def _augmentation_rotate(batch: CrystalBatch) -> CrystalBatch:
 
 
 def apply_noise(
-    batch: CrystalBatch, ratio: float, corruption_scale: float = 0.1  # Å
+    batch: CrystalBatch,
+    ratio: float,
+    corruption_scale: float = 0.1,  # Å
 ) -> CrystalBatch:
     batch_noise = batch.clone()
     device = batch_noise.cart_coords.device

@@ -33,23 +33,27 @@ def rl_model(device):
     # Create RL module with minimal configuration
     model = RLModule(
         ldm_ckpt_path=str(DEFAULT_LDM_CKPT_PATH),
-        rl_configs=OmegaConf.create({
-            "clip_ratio": 0.2,
-            "kl_weight": 0.01,
-            "entropy_weight": 0.001,
-            "num_group_samples": 2,
-            "group_reward_norm": False,
-            "num_inner_batch": 1,
-        }),
+        rl_configs=OmegaConf.create(
+            {
+                "clip_ratio": 0.2,
+                "kl_weight": 0.01,
+                "entropy_weight": 0.001,
+                "num_group_samples": 2,
+                "group_reward_norm": False,
+                "num_inner_batch": 1,
+            }
+        ),
         reward_fn=reward_fn,
-        sampling_configs=OmegaConf.create({
-            "sampler": "ddpm",
-            "sampling_steps": 10,  # Reduced for faster testing
-            "cfg_scale": 1.0,
-            "eta": 1.0,
-            "collect_trajectory": True,  # Required for RL rollout
-            "progress": False,  # Disable progress bar in tests
-        }),
+        sampling_configs=OmegaConf.create(
+            {
+                "sampler": "ddpm",
+                "sampling_steps": 10,  # Reduced for faster testing
+                "cfg_scale": 1.0,
+                "eta": 1.0,
+                "collect_trajectory": True,  # Required for RL rollout
+                "progress": False,  # Disable progress bar in tests
+            }
+        ),
         optimizer=torch.optim.Adam,
         scheduler=None,
     )
@@ -106,8 +110,12 @@ def test_rl_policy_forward_pass(rl_model, dummy_crystal_batch, device):
     assert "mask" in trajectory
 
     # Validate trajectory shapes
-    assert trajectory["zs"].dim() >= 2, "zs should have at least 2 dimensions (timesteps, batch, ...)"
-    assert trajectory["log_probs"].dim() >= 1, "log_probs should have at least 1 dimension"
+    assert trajectory["zs"].dim() >= 2, (
+        "zs should have at least 2 dimensions (timesteps, batch, ...)"
+    )
+    assert trajectory["log_probs"].dim() >= 1, (
+        "log_probs should have at least 1 dimension"
+    )
     assert torch.isfinite(trajectory["log_probs"]).all(), "log_probs should be finite"
 
 
@@ -141,7 +149,9 @@ def test_rl_reward_computation(rl_model, dummy_crystal_batch, device):
 
 @pytest.mark.baseline
 @pytest.mark.slow
-def test_rl_overfit_single_batch(rl_model, dummy_crystal_batch, seed_everything, device):
+def test_rl_overfit_single_batch(
+    rl_model, dummy_crystal_batch, seed_everything, device
+):
     """Test RL agent can overfit on a single batch.
 
     Critical validation test following Karpathy's principle:

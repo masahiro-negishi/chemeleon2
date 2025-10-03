@@ -59,9 +59,9 @@ def test_pull_request_branches(ci_workflow_data):
         branches = pr_config["branches"]
         assert isinstance(branches, list), "branches should be a list"
         # At least one of main/develop should be present
-        assert any(
-            b in branches for b in ["main", "develop"]
-        ), "Neither 'main' nor 'develop' in pull_request branches"
+        assert any(b in branches for b in ["main", "develop"]), (
+            "Neither 'main' nor 'develop' in pull_request branches"
+        )
 
 
 def test_triggers_on_push(ci_workflow_data):
@@ -100,9 +100,9 @@ def test_python_version_in_setup(ci_workflow_data):
     python_version = with_config.get("python-version", "")
 
     # Check that Python 3.11 is specified (could be '3.11' or '3.11.x' or '>= 3.11')
-    assert (
-        "3.11" in str(python_version)
-    ), f"Python 3.11 not found in version spec: {python_version}"
+    assert "3.11" in str(python_version), (
+        f"Python 3.11 not found in version spec: {python_version}"
+    )
 
 
 def test_ruff_format_check_step(ci_workflow_data):
@@ -114,17 +114,15 @@ def test_ruff_format_check_step(ci_workflow_data):
 
     # Find ruff format step
     ruff_format_steps = [
-        s
-        for s in steps
-        if "run" in s and "ruff format" in s.get("run", "").lower()
+        s for s in steps if "run" in s and "ruff format" in s.get("run", "").lower()
     ]
     assert len(ruff_format_steps) > 0, "Ruff format check step not found"
 
     # Verify it uses --check flag
     ruff_format_step = ruff_format_steps[0]
-    assert (
-        "--check" in ruff_format_step["run"]
-    ), "Ruff format step should use --check flag"
+    assert "--check" in ruff_format_step["run"], (
+        "Ruff format step should use --check flag"
+    )
 
 
 def test_ruff_lint_check_step(ci_workflow_data):

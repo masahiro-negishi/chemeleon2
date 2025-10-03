@@ -50,22 +50,28 @@ def vae_model(device):
         encoder=encoder,
         decoder=decoder,
         latent_dim=64,
-        loss_weights=OmegaConf.create({
-            "atom_types": 1.0,
-            "lengths": 1.0,
-            "angles": 1.0,
-            "frac_coords": 1.0,
-            "kl": 0.01,
-            "fa": 0.0,
-        }),
-        augmentation=OmegaConf.create({
-            "translate": False,
-            "rotate": False,
-        }),
-        noise=OmegaConf.create({
-            "ratio": 0.0,
-            "corruption_scale": 0.0,
-        }),
+        loss_weights=OmegaConf.create(
+            {
+                "atom_types": 1.0,
+                "lengths": 1.0,
+                "angles": 1.0,
+                "frac_coords": 1.0,
+                "kl": 0.01,
+                "fa": 0.0,
+            }
+        ),
+        augmentation=OmegaConf.create(
+            {
+                "translate": False,
+                "rotate": False,
+            }
+        ),
+        noise=OmegaConf.create(
+            {
+                "ratio": 0.0,
+                "corruption_scale": 0.0,
+            }
+        ),
         atom_type_predict=True,
         structure_matcher=None,
         optimizer=torch.optim.Adam,
@@ -162,7 +168,9 @@ def test_vae_loss_calculation(vae_model, dummy_crystal_batch, device):
 
 @pytest.mark.baseline
 @pytest.mark.slow
-def test_vae_overfit_single_batch(vae_model, dummy_crystal_batch, seed_everything, device):
+def test_vae_overfit_single_batch(
+    vae_model, dummy_crystal_batch, seed_everything, device
+):
     """Test VAE can overfit on a single batch.
 
     Critical validation test following Karpathy's principle:

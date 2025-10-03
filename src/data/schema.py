@@ -8,7 +8,6 @@ from src.data.dataset_util import batch_to_atoms_list, batch_to_structure_list
 
 
 class CrystalBatch(Batch):
-
     def add(self, **kwargs) -> None:
         for key, tensor in kwargs.items():
             if not isinstance(key, str):

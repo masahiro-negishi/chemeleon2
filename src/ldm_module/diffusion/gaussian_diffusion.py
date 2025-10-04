@@ -10,7 +10,6 @@ including forward diffusion, reverse sampling (DDPM/DDIM), and loss computation.
 #     ADM:   https://github.com/openai/guided-diffusion/blob/main/guided_diffusion
 #     IDDPM: https://github.com/openai/improved-diffusion/blob/main/improved_diffusion/gaussian_diffusion.py
 
-
 import enum
 import math
 
@@ -517,7 +516,7 @@ class GaussianDiffusion:
         """
         if device is None:
             device = next(model.parameters()).device
-        assert isinstance(shape, (tuple, list))
+        assert isinstance(shape, tuple | list)
         if noise is not None:
             img = noise
         else:
@@ -692,7 +691,7 @@ class GaussianDiffusion:
         """
         if device is None:
             device = next(model.parameters()).device
-        assert isinstance(shape, (tuple, list))
+        assert isinstance(shape, tuple | list)
         if noise is not None:
             img = noise
         else:

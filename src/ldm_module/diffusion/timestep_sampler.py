@@ -103,9 +103,15 @@ class LossAwareSampler(ScheduleSampler):
         dist.all_gather(timestep_batches, local_ts)
         dist.all_gather(loss_batches, local_losses)
         timesteps = [
-            x.item() for y, bs in zip(timestep_batches, batch_sizes, strict=False) for x in y[:bs]
+            x.item()
+            for y, bs in zip(timestep_batches, batch_sizes, strict=False)
+            for x in y[:bs]
         ]
-        losses = [x.item() for y, bs in zip(loss_batches, batch_sizes, strict=False) for x in y[:bs]]
+        losses = [
+            x.item()
+            for y, bs in zip(loss_batches, batch_sizes, strict=False)
+            for x in y[:bs]
+        ]
         self.update_with_all_losses(timesteps, losses)
 
     @abstractmethod

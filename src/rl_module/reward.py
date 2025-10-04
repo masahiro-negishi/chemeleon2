@@ -219,7 +219,9 @@ def reward_csp(batch_gen: CrystalBatch, m: Metrics) -> torch.Tensor:
     r_composition_matching = torch.tensor(
         [
             gen_comp == ref_comp
-            for gen_comp, ref_comp in zip(gen_compositions, ref_compositions, strict=False)
+            for gen_comp, ref_comp in zip(
+                gen_compositions, ref_compositions, strict=False
+            )
         ]
     )
 

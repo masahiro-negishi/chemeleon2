@@ -44,15 +44,15 @@ def test_pyright_type_checking_mode(pyproject_data) -> None:
     """Test that typeCheckingMode is set to 'basic'."""
     pyright_config = pyproject_data["tool"]["pyright"]
     assert "typeCheckingMode" in pyright_config, "typeCheckingMode not configured"
-    assert (
-        pyright_config["typeCheckingMode"] == "basic"
-    ), f"Expected typeCheckingMode='basic', got '{pyright_config['typeCheckingMode']}'"
+    assert pyright_config["typeCheckingMode"] == "basic", (
+        f"Expected typeCheckingMode='basic', got '{pyright_config['typeCheckingMode']}'"
+    )
 
 
 def test_pyright_python_version(pyproject_data) -> None:
     """Test that pythonVersion is set to '3.11'."""
     pyright_config = pyproject_data["tool"]["pyright"]
     assert "pythonVersion" in pyright_config, "pythonVersion not configured"
-    assert (
-        pyright_config["pythonVersion"] == "3.11"
-    ), f"Expected pythonVersion='3.11', got '{pyright_config['pythonVersion']}'"
+    assert pyright_config["pythonVersion"] == "3.11", (
+        f"Expected pythonVersion='3.11', got '{pyright_config['pythonVersion']}'"
+    )

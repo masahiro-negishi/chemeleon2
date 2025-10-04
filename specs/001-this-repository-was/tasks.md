@@ -242,120 +242,110 @@
   - All 5 contract tests must pass (Ruff, pyright, pre-commit, GitHub Actions, setup script)
   - **Dependency**: Requires T008-T011 (all configs created)
 
-- [ ] **T022** Verify CI/CD workflow in GitHub
+---
+
+## Phase 3.7: Pyright Type Error Resolution (Bottom-Up Strategy)
+
+⚠️ **STRATEGY**: Fix type errors from foundation layer to application layer (leaf → root in dependency tree). This ensures fixes in lower layers automatically resolve cascading errors in upper layers.
+
+### Layer 1: Foundation (Utils, Data, Checkpoints)
+
+- [ ] **T023 [P]** Fix pyright errors in utils/ (35 errors total)
+  - Fix `src/utils/metrics.py` (19 errors)
+  - Fix `src/utils/ema_callback.py` (5 errors)
+  - Fix `src/utils/cl_score.py` (4 errors)
+  - Fix `src/utils/visualize.py` (4 errors)
+  - Fix `src/utils/featurizer.py` (3 errors)
+  - Verify: `pyright src/utils/`
+  - **Dependency**: Requires T019 (clean Ruff), T021 (contracts pass)
+
+- [ ] **T024 [P]** Fix pyright errors in data/ and ckpts/ (8 errors total)
+  - Fix `src/data/components/mp_dataset.py` (5 errors)
+  - Fix `ckpts/slim_ckpt.py` (3 errors)
+  - Verify: `pyright src/data/ ckpts/`
+  - **Dependency**: Requires T019 (clean Ruff), T021 (contracts pass)
+
+### Layer 2: Core Modules (VAE, LDM, RL)
+
+- [ ] **T025** Fix pyright errors in vae_module/ (49 errors total)
+  - Fix `src/vae_module/vae_module.py` (28 errors)
+  - Fix `src/vae_module/encoders/transformer.py` (10 errors)
+  - Fix `src/vae_module/predictor_module.py` (8 errors)
+  - Fix `src/vae_module/decoders/transformer.py` (2 errors)
+  - Fix `src/vae_module/encoders/cspnet.py` (1 error)
+  - Verify: `pyright src/vae_module/`
+  - **Dependency**: Requires T023, T024 (foundation fixed)
+
+- [ ] **T026** Fix pyright errors in ldm_module/ (47 errors total)
+  - Fix `src/ldm_module/ldm_module.py` (17 errors)
+  - Fix `src/ldm_module/denoisers/dit.py` (10 errors)
+  - Fix `src/ldm_module/diffusion/gaussian_diffusion.py` (9 errors)
+  - Fix `src/ldm_module/diffusion/timestep_sampler.py` (9 errors)
+  - Fix `src/ldm_module/condition.py` (2 errors)
+  - Verify: `pyright src/ldm_module/`
+  - **Dependency**: Requires T023, T024 (foundation fixed)
+
+- [ ] **T027** Fix pyright errors in rl_module/ (55 errors total)
+  - Fix `src/rl_module/rl_module.py` (53 errors)
+  - Fix `src/rl_module/reward.py` (2 errors)
+  - Verify: `pyright src/rl_module/`
+  - **Dependency**: Requires T023, T024 (foundation fixed)
+
+### Layer 3: Application Scripts
+
+- [ ] **T028** Fix pyright errors in training/evaluation scripts (20 errors total)
+  - Fix `src/evaluate.py` (11 errors)
+  - Fix `src/sample.py` (5 errors)
+  - Fix `src/sweep_vae.py` (1 error)
+  - Fix `src/train_ldm.py` (1 error)
+  - Fix `src/train_predictor.py` (1 error)
+  - Fix `src/train_rl.py` (1 error)
+  - Fix `src/train_vae.py` (1 error)
+  - Verify: `pyright src/*.py`
+  - **Dependency**: Requires T025, T026, T027 (core modules fixed)
+
+### Layer 4: Test Files
+
+- [ ] **T029** Fix pyright errors in baseline tests (15 errors total)
+  - Fix `tests/baseline/test_vae_module.py` (6 errors)
+  - Fix `tests/baseline/test_rl_module.py` (5 errors)
+  - Fix `tests/baseline/test_ldm_module.py` (3 errors)
+  - Fix `tests/baseline/test_data_loading.py` (1 error)
+  - Verify: `pyright tests/baseline/`
+  - **Dependency**: Requires T025, T026, T027 (core modules fixed)
+
+### Verification
+
+- [ ] **T030** Verify all pyright errors resolved
+  - Run: `pyright .` from repository root
+  - Verify 0 errors reported
+  - Run: `pytest tests/baseline/ -v -m baseline` to ensure functionality intact
+  - Run: `pytest tests/contract/ -v` to verify contract tests pass
+  - **Dependency**: Requires T023-T029 (all layers fixed)
+
+---
+
+## Phase 3.8: CI/CD Validation & Documentation
+
+- [ ] **T031** Verify CI/CD workflow in GitHub
   - Push branch to GitHub
   - Open test Pull Request
   - Verify GitHub Actions CI runs automatically
   - Verify all checks pass (format, lint, type checking, pytest)
   - Close test PR
-  - **Dependency**: Requires T010, T019 (clean codebase), T021 (tests pass)
+  - **Dependency**: Requires T010, T030 (all pyright errors fixed), T021 (tests pass)
 
----
-
-## Phase 3.7: Claude Agent Auto-Fix Integration
-
-- [ ] **T023 [P]** Create Claude agent pre-commit hook script in `.git-hooks/claude-autofix.sh`
-  - Create custom git hooks directory `.git-hooks/`
-  - Write bash script that:
-    - Runs `ruff format --check .`, `ruff check .`, and `pyright`
-    - Captures Ruff and pyright error output
-    - If errors found, invokes Claude Code CLI with error messages
-    - Applies Claude's fixes automatically
-    - Re-runs Ruff and pyright validation
-    - **NEW: Runs `pytest tests/baseline/ -m smoke --maxfail=1` to verify fixes didn't break functionality**
-    - **NEW: If tests fail, rolls back changes and exits with code 1**
-    - Returns exit code 0 if fixed and tests pass, 1 if still failing or tests fail
-  - Make script executable: `chmod +x .git-hooks/claude-autofix.sh`
-  - **Dependency**: Requires T019 (clean baseline), T007 (baseline tests exist)
-
-- [ ] **T024 [P]** Create Claude agent configuration in `.claude/hooks/pre-commit-autofix.md`
-  - Create `.claude/hooks/` directory
-  - Define hook prompt template for Ruff and pyright error fixing
-  - Include instructions for Claude to:
-    - Parse Ruff error messages
-    - Parse pyright type errors
-    - Apply formatting fixes
-    - Add missing docstrings
-    - Add missing type hints
-    - Fix type inconsistencies
-    - Fix import ordering
-    - Reduce complexity if needed
-  - Specify output format (direct file edits)
-
-- [ ] **T025** Update pre-commit config to support Claude auto-fix
-  - Modify `.pre-commit-config.yaml` to add optional manual hook
-  - Add comment explaining Claude auto-fix activation
-  - Document opt-in mechanism (developers can enable/disable)
-  - **Dependency**: Requires T009, T023, T024
-
-- [ ] **T026** Create Claude auto-fix wrapper command in `scripts/claude-fix.sh`
-  - Create `scripts/` directory if not exists
-  - Write wrapper script that:
-    - Checks if Claude Code CLI is installed
-    - Runs pre-commit checks
-    - If failures, invokes `.git-hooks/claude-autofix.sh`
-    - **NEW: Displays test results if Claude made changes**
-    - Shows before/after diff
-    - Asks user to confirm changes
-  - Make executable: `chmod +x scripts/claude-fix.sh`
-  - **Dependency**: Requires T023, T007 (baseline tests)
-
----
-
-## Phase 3.8: Documentation
-
-- [ ] **T027** Create CONTRIBUTING.md at repository root
+- [ ] **T032** Create CONTRIBUTING.md at repository root
   - Add "Table of Contents" section
   - Add "Setup Instructions" with one-command setup
   - Add "Development Workflow" with commit process
   - Add "Coding Standards" explaining Ruff rules and pyright basic mode
   - Add "Type Checking" section explaining pyright usage and basic mode requirements
-  - Add "Manual AI Agent Usage" with example prompts for copying errors
-  - Add "Claude Auto-Fix Usage" explaining `./scripts/claude-fix.sh` command
   - Add "Troubleshooting" for common issues including type checking errors
   - Add "CI/CD" explaining GitHub Actions workflow
   - Add "CI/CD Failure Troubleshooting" explaining how to interpret GitHub Actions check failures (format check, lint check, type check, pytest failures) for developers new to the workflow
   - Reference quickstart.md for validation steps
-  - **Dependency**: Requires T020 (verified workflow), T026 (Claude integration)
-
----
-
-## Phase 3.9: Pyright Type Error Resolution
-
-⚠️ **NOTE**: Pyright was temporarily made non-blocking in T022 due to pre-existing type errors. This phase resolves all type errors and re-enables strict pyright checking.
-
-- [ ] **T028** Fix pyright type errors in ldm_module
-  - Fix type errors in `src/ldm_module/denoisers/dit.py` (10 errors)
-  - Fix type errors in `src/ldm_module/diffusion/gaussian_diffusion.py` (7 errors)
-  - Fix type errors in `src/ldm_module/diffusion/timestep_sampler.py` (9 errors)
-  - Verify fixes with: `pyright src/ldm_module/`
-  - **Dependency**: Requires T022 (CI passing with non-blocking pyright)
-
-- [ ] **T029** Fix pyright type errors in rl_module
-  - Fix type errors in `src/rl_module/reward.py` (2 errors)
-  - Verify fixes with: `pyright src/rl_module/`
-  - **Dependency**: Requires T022 (CI passing with non-blocking pyright)
-
-- [ ] **T030** Re-enable pyright in pre-commit hooks
-  - Uncomment pyright hook in `.pre-commit-config.yaml`
-  - Remove "TEMPORARILY DISABLED" comment
-  - Update comment to reference completed type error fixes
-  - Test hook works: make intentional type error and verify it's caught
-  - **Dependency**: Requires T028, T029 (all type errors fixed)
-
-- [ ] **T031** Make pyright blocking in CI workflow
-  - Remove `continue-on-error: true` from `.github/workflows/ci.yml`
-  - Remove comment about "non-blocking for now"
-  - Update comment to indicate pyright errors will fail CI
-  - Run full CI to verify all checks pass
-  - **Dependency**: Requires T030 (pre-commit hook working)
-
-- [ ] **T032** Verify pyright integration is fully enabled
-  - Run: `pytest tests/contract/ -v` to verify all contract tests pass
-  - Verify pre-commit hook catches type errors
-  - Verify CI fails on intentional type error (test in branch)
-  - Document that pyright is now fully enforced
-  - **Dependency**: Requires T031 (CI blocking enabled)
+  - **Dependency**: Requires T020 (verified workflow), T031 (CI verified)
 
 ---
 
@@ -390,25 +380,21 @@ T018 GATES → Integration Phase
 Integration Phase:
 T019 → T020 (install hooks)
 T008-T011, T008a → T021 (contract tests)
-T019, T021 → T022 (verify CI)
 
-Claude Auto-Fix Phase:
-T019, T007 → T023 (Claude hook script) ┐
-T019 → T024 (Claude config)            ├─ [Parallel - different files]
-                                       │
-T009, T023, T024 → T025 (update pre-commit)
-T023, T007 → T026 (wrapper script)
+Pyright Error Resolution Phase (Bottom-Up):
+T019, T021 → Layer 1: T023 (utils/) [P] T024 (data/, ckpts/) ┐
+                                                              │
+Layer 1 → Layer 2: T025 (vae_module/) [P] T026 (ldm_module/) [P] T027 (rl_module/)
+                                                              │
+Layer 2 → Layer 3: T028 (train scripts)                      │
+                                                              │
+Layer 2 → Layer 4: T029 (test files)                         │
+                                                              │
+T023-T029 → T030 (verify all fixed)
 
-Documentation:
-T020, T026 → T027 (CONTRIBUTING.md)
-
-Pyright Error Resolution Phase:
-T022 → T028 (fix ldm_module types) ┐
-T022 → T029 (fix rl_module types)  ├─ [Parallel - different modules]
-                                   │
-T028, T029 → T030 (re-enable pre-commit pyright)
-T030 → T031 (make CI pyright blocking)
-T031 → T032 (verify full integration)
+CI/CD Validation & Documentation:
+T010, T030, T021 → T031 (verify CI)
+T020, T031 → T032 (CONTRIBUTING.md)
 ```
 
 ---
@@ -450,18 +436,19 @@ pytest tests/contract/ -n auto
 # Task 5: "Contract test for setup script in tests/contract/test_setup_script.py"
 ```
 
-### Example 4: Claude Auto-Fix Components (T023-T024)
+### Example 4: Pyright Layer 1 Foundation (T023-T024)
 ```bash
-# Claude hook script and config can be created in parallel - different files
-# Task 1: "Create Claude agent pre-commit hook script in .git-hooks/claude-autofix.sh"
-# Task 2: "Create Claude agent configuration in .claude/hooks/pre-commit-autofix.md"
+# Foundation layer fixes can run in parallel - independent modules
+# Task 1: "Fix pyright errors in utils/ (35 errors)"
+# Task 2: "Fix pyright errors in data/ and ckpts/ (8 errors)"
 ```
 
-### Example 5: Pyright Type Error Fixes (T028-T029)
+### Example 5: Pyright Layer 2 Core Modules (T025-T027)
 ```bash
-# Type error fixes in different modules can run in parallel - different files
-# Task 1: "Fix pyright type errors in ldm_module"
-# Task 2: "Fix pyright type errors in rl_module"
+# Core module fixes can run in parallel AFTER Layer 1 completes
+# Task 1: "Fix pyright errors in vae_module/ (49 errors)"
+# Task 2: "Fix pyright errors in ldm_module/ (47 errors)"
+# Task 3: "Fix pyright errors in rl_module/ (55 errors)"
 ```
 
 ---
@@ -484,11 +471,11 @@ pytest tests/contract/ -n auto
 
 - **[P]** tasks indicate different files with no dependencies - safe for parallel execution
 - **Sequential tasks** (T016 → T017 → T018 → T019) must run in order
+- **Bottom-Up Strategy**: Pyright errors fixed from foundation (utils, data) → core modules (vae, ldm, rl) → application scripts → tests
 - **Commit frequently**: After each task or logical group of parallel tasks
 - **Test-first approach**: Baseline tests created and verified BEFORE any formatting changes
 - **Avoid**: Vague tasks, modifying same file in parallel tasks
 - **Performance target**: Pre-commit validation < 15 seconds (including type checking), CI pipeline < 5 minutes
-- **Claude Auto-Fix**: Optional feature - developers can use `./scripts/claude-fix.sh` to automatically fix Ruff and pyright violations instead of manual copy-paste to AI
 
 ---
 
@@ -504,11 +491,11 @@ pytest tests/contract/ -n auto
 - [x] No task modifies same file as another [P] task
 - [x] Critical requirement met: Baseline tests BEFORE formatting changes (T007 gates T008-T014)
 - [x] Test-First Development: T003-T007 before T016-T019
-- [x] Claude Auto-Fix integration added: T023-T027 for automatic Ruff and pyright violation fixing
-- [x] Pyright error resolution phase added: T028-T032 for fixing type errors and re-enabling strict checking
+- [x] Pyright error resolution uses bottom-up strategy: foundation → core modules → application → tests
+- [x] Layer dependencies enforced: Layer 1 (T023-T024) → Layer 2 (T025-T027) → Layer 3 (T028) & Layer 4 (T029)
 
 ---
 
 **Tasks Complete** ✅
-Total: 34 tasks (23 original + 4 Claude Auto-Fix + 2 pyright config additions + 5 pyright error resolution)
+Total: 32 tasks (21 original + 2 pyright config additions + 8 pyright error resolution + 1 verification)
 Ready for Phase 3 execution. Begin with T001.

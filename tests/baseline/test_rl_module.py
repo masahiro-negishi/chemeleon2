@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from omegaconf import OmegaConf
 
-from src.paths import DEFAULT_LDM_CKPT_PATH
+from src.paths import DEFAULT_LDM_CKPT_PATH, DEFAULT_VAE_CKPT_PATH
 from src.rl_module.reward import ReinforceReward
 from src.rl_module.rl_module import RLModule
 
@@ -56,6 +56,7 @@ def rl_model(device):
         ),
         optimizer=torch.optim.Adam,  # type: ignore
         scheduler=None,  # type: ignore
+        vae_ckpt_path=str(DEFAULT_VAE_CKPT_PATH),
     )
 
     return model.to(device)

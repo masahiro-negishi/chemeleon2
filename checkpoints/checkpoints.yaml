@@ -38,4 +38,4 @@ config:
   hf_repo: "hspark1212/chemeleon2-checkpoints"
   cache_dir: "./checkpoints"
   retry_attempts: 3
-  retry_delay: 2  # seconds
+  retry_delay: 2 # seconds

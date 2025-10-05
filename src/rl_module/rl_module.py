@@ -24,6 +24,7 @@ class RLModule(LightningModule):
         sampling_configs: dict,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+        vae_ckpt_path: str | None = None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False, ignore=["reward_fn"])
@@ -42,7 +43,9 @@ class RLModule(LightningModule):
         self.sampling_configs = sampling_configs
 
         # Load pre-trained LDM (Freeze VAE and condition embedding)
-        self.ldm = LDMModule.load_from_checkpoint(ldm_ckpt_path)
+        self.ldm = LDMModule.load_from_checkpoint(
+            ldm_ckpt_path, vae_ckpt_path=vae_ckpt_path
+        )
         print(f"Loaded LDM from {ldm_ckpt_path}")
         self.ldm.vae.eval()
         for param in self.ldm.vae.parameters():

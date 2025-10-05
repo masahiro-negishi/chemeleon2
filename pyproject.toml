@@ -40,6 +40,7 @@ metrics = [
 dev = [
     "jupyterlab>=4.4.6",  # Jupyter development environment
     "nglview>=3.1.4",     # 3D structure visualization
+    "pre-commit>=4.0.0",  # Pre-commit hooks framework
     "pytest>=7.0",        # Testing framework
     "pyright==1.1.406",   # Type checking
     "rich>=14.1.0",       # Terminal output formatting

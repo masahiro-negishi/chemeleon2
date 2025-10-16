@@ -35,51 +35,38 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_ORG/chemeleon2.git
+git clone https://github.com/hspark1212/chemeleon2.git
 cd chemeleon2
 ```
 
 ### Step 2: Install Dependencies
 
 ```bash
-# Install all dependencies including dev tools
-uv sync
-uv pip install -e ".[dev]"
+# Install all dependencies with  dev dependencies (pytest, ruff, pyright, etc.)
+uv sync --extra dev
+
+# Optional install torch with your cuda version (e.g., for CUDA 12.8)
+uv pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu128
 ```
 
-### Step 3: Install Pre-commit Hooks
-
-**⚠️ Important:** Do this BEFORE your first commit!
-
-```bash
-.venv/bin/pre-commit install
-```
-
-This installs hooks that automatically run formatting, linting, and type checking on every commit.
-
-### Step 4: Verify Installation
+### Step 3: Verify Installation
 
 Test that everything works:
 
 ```bash
-.venv/bin/pre-commit run --all-files
-```
+# activate the virtual environment
+source .venv/bin/activate
 
-**Expected output:**
-```
-Ruff Format.....................................Passed
-Ruff Lint.......................................Passed
-Pyright Type Check..............................Passed
-Check YAML......................................Passed
-Check TOML......................................Passed
-Check JSON......................................Passed
+# Run pre-commit hooks on all files to ensure code quality
+.venv/bin/pre-commit run --all-files
+
+# Run pytest to ensure tests pass
+pytest -v
 ```
 
 ---
 
 ## 3. Git Workflow
-
-> **📖 New to Git?** See [Contributing Quick Start](README.md#contributing-quick-start) in README.md for basics.
 
 ### Key Concepts
 
@@ -137,11 +124,16 @@ git push
 
 ### Making Changes
 
-1. **Create a branch** (see Git Workflow above)
+1. **Activate the virtual environment** (if not already activated):
+   ```bash
+   source .venv/bin/activate
+   ```
 
-2. **Make your changes** in your code editor
+2. **Create a branch** (see Git Workflow above)
 
-3. **Test your changes locally:**
+3. **Make your changes** in your code editor
+
+4. **Test your changes locally:**
    ```bash
    # Run relevant tests
    pytest tests/
@@ -150,7 +142,7 @@ git push
    pytest tests/unit/test_your_feature.py
    ```
 
-4. **Commit your changes:**
+5. **Commit your changes:**
    ```bash
    git add .
    git commit -m "feat: descriptive commit message"
@@ -161,12 +153,12 @@ git push
    - Stage changes again: `git add .`
    - Commit again: `git commit -m "your message"`
 
-5. **Push to GitHub:**
+6. **Push to GitHub:**
    ```bash
    git push -u origin your-branch-name
    ```
 
-6. **Create a Pull Request:**
+7. **Create a Pull Request:**
    - Go to GitHub
    - Click "Compare & pull request"
    - Describe your changes
@@ -199,7 +191,7 @@ pytest tests/ -m unit          # Unit tests
 pytest tests/ -m integration   # Integration tests
 
 # Run specific test file
-pytest tests/unit/test_vae_module.py -v
+pytest tests/unit/test_featurizer.py -v
 ```
 
 ### Running Linters

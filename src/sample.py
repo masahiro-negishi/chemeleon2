@@ -11,8 +11,7 @@ from pymatgen.core import Composition, Structure
 from src.data.num_atom_distributions import NUM_ATOM_DISTRIBUTIONS
 from src.data.schema import create_empty_batch
 from src.ldm_module.ldm_module import LDMModule
-
-DEFAULT_MODEL_PATH = "ckpts/ldm/kl_1e-5_last/model.ckpt"  # TODO: update this path
+from src.paths import DEFAULT_LDM_CKPT_PATH
 
 
 def sample(
@@ -21,7 +20,7 @@ def sample(
     compositions: list | None = None,
     text_prompts: list | None = None,
     num_atom_distribution: str = "mp-20",
-    model_path: str | None = None,
+    model_path: str | Path | None = None,
     output_dir: str = "outputs",
     sampler: str = "ddim",
     sampling_steps: int = 50,
@@ -75,7 +74,7 @@ def sample(
 
     # Set default checkpoint path if not provided
     if model_path is None:
-        model_path = DEFAULT_MODEL_PATH
+        model_path = DEFAULT_LDM_CKPT_PATH
     print(f"Using checkpoint path: {model_path}")
 
     # CSP task

@@ -10,3 +10,4 @@ norm_first: true
 bias: true
 num_layers: 8
 index_embedding: sinusoidal
+mace_embedding: null

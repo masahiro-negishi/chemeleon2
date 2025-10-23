@@ -122,5 +122,5 @@ class MPDataset(InMemoryDataset):
         # Dynamically attach MACE features if available
         if self.mace_features:
             material_id = self.df.loc[idx, "material_id"]
-            data.mace_features = self.mace_features_dict[material_id]
+            data.mace_features = self.mace_features_dict[material_id].to(torch.get_default_dtype())
         return data

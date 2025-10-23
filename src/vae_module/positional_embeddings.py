@@ -118,10 +118,103 @@ class GlobalNumAtomsEmbedding(nn.Module):
         # Sinusoidal path
         return self.sine(per_node_indices, self.embedding_dim)  # (N_total, embedding_dim)
 
+import torch
+from torch import nn
+
+
+import torch
+from torch import nn
+
+class SmoothEmbedding(nn.Module):
+    """
+    Smooth embedding: (..., 256) -> (..., embedding_dim)
+    SiLU/GELU/RELU supported. Uses Kaiming for hidden layers (good proxy for SiLU/GELU),
+    and Xavier for the output layer.
+    """
+    def __init__(
+        self,
+        input_dim: int = 256,
+        embedding_dim: int = 128,
+        width: int = 512,
+        depth: int = 2,
+        dropout: float = 0.0,
+        activation: str = "silu",  # 'silu' | 'gelu' | 'relu' | 'tanh'
+        use_layernorm: bool = True,
+    ):
+        super().__init__()
+        act_map = {
+            "silu": nn.SiLU(),
+            "gelu": nn.GELU(approximate="tanh"),
+            "relu": nn.ReLU(),
+            "tanh": nn.Tanh(),
+        }
+        if activation not in act_map:
+            raise ValueError(f"Unsupported activation '{activation}'")
+        self.activation_name = activation
+        act = act_map[activation]
+
+        layers = []
+        if use_layernorm:
+            layers.append(nn.LayerNorm(input_dim))
+
+        in_d = input_dim
+        for _ in range(depth):
+            layers += [
+                nn.Linear(in_d, width),
+                act,
+                nn.Dropout(dropout),
+            ]
+            in_d = width
+
+        layers.append(nn.Linear(in_d, embedding_dim))  # output layer
+        self.net = nn.Sequential(*layers)
+
+        self._init_weights()
+
+    def _init_weights(self):
+        # Hidden layers: Kaiming (good for ReLU/SiLU/GELU)
+        for i, m in enumerate(self.net):
+            if isinstance(m, nn.Linear):
+                is_last = (i == len(self.net) - 1)
+                if is_last:
+                    # Output layer: Xavier with gain=1.0
+                    nn.init.xavier_uniform_(m.weight, gain=1.0)
+                else:
+                    if self.activation_name in {"relu", "silu", "gelu"}:
+                        nn.init.kaiming_uniform_(m.weight, a=0.0, nonlinearity="relu")
+                    elif self.activation_name == "tanh":
+                        nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain("tanh"))
+                    else:
+                        nn.init.xavier_uniform_(m.weight, gain=1.0)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+class LinearEmbedding(nn.Module):
+    """
+    Simple linear map: (..., 256) -> (..., embedding_dim)
+    Applies a single nn.Linear to the last dimension.
+    """
+    def __init__(self, input_dim: int = 256, embedding_dim: int = 128, bias: bool = True):
+        super().__init__()
+        self.proj = nn.Linear(input_dim, embedding_dim, bias=bias)
+        # Stable default init
+        nn.init.xavier_uniform_(self.proj.weight)
+        if bias:
+            nn.init.zeros_(self.proj.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.proj(x)
+
+
 __all__ = [
     "PositionalEmbedding",
     "SinusoidalPositionalEmbedding",
     "LearnedPositionalEmbedding",
     "NoPositionalEmbedding",
     "GlobalNumAtomsEmbedding",
+    "SmoothEmbedding",
+    "LinearEmbedding",
 ]

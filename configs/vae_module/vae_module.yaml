@@ -12,7 +12,7 @@ loss_weights:
   angles: 10.0
   frac_coords: 10.0
   kl: 1e-5
-  fa: 0.0
+  fa: 0.0 # turns on foundational aligment
 
 augmentation:
   translate: true # translate cartesian and fractional coordinates

@@ -254,9 +254,9 @@ class Metrics:
                 "unique",
                 "novel",
                 "e_above_hull",
-                "composition_validity",
-                "structure_diversity",
-                "composition_diversity",
+                # "composition_validity",
+                # "structure_diversity",
+                # "composition_diversity",
             ]
             print(f"Using default metrics: {self.metrics}")
 

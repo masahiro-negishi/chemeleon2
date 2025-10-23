@@ -16,6 +16,8 @@ from src.vae_module.positional_embeddings import (
     NoPositionalEmbedding,
     GlobalNumAtomsEmbedding,
     SinusoidalPositionalEmbedding,
+    SmoothEmbedding,
+    LinearEmbedding,
 )
 
 
@@ -71,6 +73,7 @@ class TransformerEncoder(nn.Module):
         num_layers: int = 6,
         max_num_atoms: int = 512,
         index_embedding: str = 'sinusoidal',
+        mace_embedding: str = None,
     ):
         super().__init__()
 
@@ -121,6 +124,25 @@ class TransformerEncoder(nn.Module):
         else:
             raise ValueError(f"Unknown index_embedding: {index_embedding}")
 
+        if mace_embedding is None:
+            self.mace_embedding = None
+        elif mace_embedding == 'smooth':
+            self.mace_embedding = SmoothEmbedding(
+                input_dim=256,
+                embedding_dim=d_model,
+                width=d_model,
+                depth=2,
+                dropout=0.0,
+                use_layernorm=True,
+            )
+        elif mace_embedding == 'linear':
+            self.mace_embedding = LinearEmbedding(
+                input_dim=256,
+                embedding_dim=d_model,
+            )
+        else:
+            raise ValueError(f"Unknown mace_embedding: {mace_embedding}")
+
     @property
     def hidden_dim(self):
         return self.d_model
@@ -139,6 +161,8 @@ class TransformerEncoder(nn.Module):
                 num_atoms (torch.Tensor): Number of atoms in the batch
                 batch (torch.Tensor): Batch index for each atom
         """
+
+
         x = self.atom_type_embedder(batch.atom_types)
         x += self.lattices_embedder(batch.lattices.view(-1, 9))[batch.batch]
         x += self.frac_coords_embedder(batch.frac_coords)
@@ -153,6 +177,11 @@ class TransformerEncoder(nn.Module):
             )
         else:
             x += self.index_embedding(batch["token_idx"], self.d_model)
+
+        if self.mace_embedding is not None:
+            x += self.mace_embedding(batch.mace_features)
+
+
 
         # Convert from PyG batch to dense batch with padding
         x, token_mask = to_dense_batch(x, batch.batch)

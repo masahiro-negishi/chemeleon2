@@ -1,16 +1,16 @@
 _target_: src.data.datamodule.DataModule
 _recursive_: false
-name: mp_amorphous
-batch_size: 64
+name: alex_mp_20_bandgap
+batch_size: 128
 num_workers: 16
 pin_memory: false
 
 dataset:
   _target_: src.data.components.mp_dataset.MPDataset
-  root: ${paths.data_dir}/mp_amorphous
+  root: ${paths.data_dir}/alex_mp_20_bandgap
   compute_radius_graph: false
   r_cutoff: 6.0
   max_neighbors: null
   compute_edge_vectors: True
-  target_condition: null
+  target_condition: dft_band_gap
   mace_features: false

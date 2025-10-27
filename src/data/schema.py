@@ -30,6 +30,9 @@ class CrystalBatch(Batch):
         atom_types: Atom type indices
         pos: Atom positions (alias for cart_coords/frac_coords)
         token_idx: Token indices for atoms
+        edge_index: Edge connectivity (2, E) - [sources, targets]
+        edge_shifts: Cartesian edge shifts (E, 3)
+        edge_unit_shifts: Unit cell edge shifts (E, 3)
     """
 
     # Type hints for dynamically added attributes
@@ -52,6 +55,9 @@ class CrystalBatch(Batch):
     zs: Tensor  # Latent trajectory (optional, dynamically added for RL)
     means: Tensor  # Means trajectory (optional, dynamically added for RL)
     stds: Tensor  # Stds trajectory (optional, dynamically added for RL)
+    edge_index: Tensor  # Edge connectivity (2, E) - [sources, targets]
+    edge_shifts: Tensor  # Cartesian edge shifts (E, 3)
+    edge_unit_shifts: Tensor  # Unit cell edge shifts (E, 3)
 
     def add(self, **kwargs) -> None:
         for key, tensor in kwargs.items():

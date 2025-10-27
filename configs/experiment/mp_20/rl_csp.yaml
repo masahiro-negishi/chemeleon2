@@ -10,7 +10,8 @@ defaults:
 
 data:
   batch_size: 32
-  target_condition: composition
+  dataset:
+    target_condition: composition
 
 rl_module:
   ldm_ckpt_path: ckpts/mp_20/ldm/ldm_csp_i16hmxnk.ckpt

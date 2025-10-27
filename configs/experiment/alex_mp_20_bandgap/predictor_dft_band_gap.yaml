@@ -1,5 +1,6 @@
 # @package _global_
 defaults:
+  - override /data: alex_mp_20_bandgap
   - override /callbacks: default
   - override /logger: wandb
   - override /scheduler: constant
@@ -8,14 +9,7 @@ defaults:
   - override /hydra: default
 
 data:
-  _target_: src.data.datamodule.DataModule
-  data_dir: ${paths.data_dir}/alex_mp_20_bandgap
   batch_size: 256
-  dataset_type: "alex_mp_20_bandgap"
-  target_condition: dft_band_gap
-  mace_features: false
-  num_workers: 16
-  pin_memory: false
 
 predictor_module:
   vae:
@@ -29,5 +23,5 @@ predictor_module:
 logger:
   wandb:
     name: "predictor_dft_band_gap"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["vae", "predictor", "dft_band_gap"]

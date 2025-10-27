@@ -15,7 +15,8 @@ trainer:
 
 data:
   batch_size: 128
-  target_condition: "chemical_system" # ["dft_band_gap", "chemical_system", "ml_bulk_modulus", "composition"]
+  dataset:
+    target_condition: "chemical_system" # ["dft_band_gap", "chemical_system", "ml_bulk_modulus", "composition"]
 
 ldm_module:
   ldm_ckpt_path: ckpts/mp_120/ldm/ldm_rl_dng_lfczlivd.ckpt
@@ -36,5 +37,5 @@ ldm_module:
 logger:
   wandb:
     name: "ldm_chemical_system_finetuned_from_rl_dng"
-    group: "${task_name}/${data.dataset_type}/condition"
+    group: "${task_name}/${data.name}/condition"
     tags: ["ldm", "dng", "condition", "finetune", "chemical_system"]

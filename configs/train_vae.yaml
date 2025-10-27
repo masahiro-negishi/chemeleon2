@@ -14,7 +14,8 @@ trainer:
   max_epochs: 5000
 
 data:
-  mace_features: False
+  dataset:
+    mace_features: False
 
 callbacks:
   model_checkpoint:

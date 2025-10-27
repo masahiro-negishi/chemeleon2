@@ -1,8 +1,16 @@
 _target_: src.data.datamodule.DataModule
-data_dir: ${paths.data_dir}/mp-20
+_recursive_: false
+name: mp-20
 batch_size: 256
-dataset_type: "mp_20"
-target_condition: null
-mace_features: false
 num_workers: 16
 pin_memory: false
+
+dataset:
+  _target_: src.data.components.mp_dataset.MPDataset
+  root: ${paths.data_dir}/mp-20
+  compute_radius_graph: false
+  r_cutoff: 6.0
+  max_neighbors: null
+  compute_edge_vectors: True
+  target_condition: null
+  mace_features: false

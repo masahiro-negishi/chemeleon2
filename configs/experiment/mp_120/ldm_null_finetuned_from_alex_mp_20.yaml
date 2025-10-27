@@ -14,11 +14,12 @@ ldm_module:
   ldm_ckpt_path: "ckpts/alex_mp_20/ldm/ldm_null_k744ob4i.ckpt" # pre-trained LDM checkpoint
 
 data:
-  target_condition: null
+  dataset:
+    target_condition: null
   batch_size: 128
 
 logger:
   wandb:
     name: "ldm_dng"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["ldm", "dng", "null_condition"]

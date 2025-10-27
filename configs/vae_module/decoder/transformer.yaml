@@ -10,3 +10,4 @@ dropout: 0.0
 norm_first: true
 bias: true
 num_layers: 8
+atom_index_embedding: true # TODO: change to false as default

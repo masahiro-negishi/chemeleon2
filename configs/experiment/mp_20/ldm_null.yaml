@@ -13,10 +13,11 @@ ldm_module:
   vae_ckpt_path: ckpts/mp_20/vae/dng_m4owq4i5_v0.ckpt
 
 data:
-  target_condition: null
+  dataset:
+    target_condition: null
 
 logger:
   wandb:
     name: "ldm_dng"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["ldm", "dng", "null_condition"]

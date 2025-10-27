@@ -29,5 +29,5 @@ ldm_module:
 logger:
   wandb:
     name: "ldm_null_finetuned_from_ldm_rl_dng_alex_mp_20"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["ldm", "dng", "null", "finetune", "mp_amorphous"]

@@ -19,7 +19,7 @@ vae_module:
 logger:
   wandb:
     name: "vae_dng"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["vae", "dng"]
 
 ckpt_path: ckpts/alex_mp_20/vae/dng_j1jgz9t0_v1.ckpt

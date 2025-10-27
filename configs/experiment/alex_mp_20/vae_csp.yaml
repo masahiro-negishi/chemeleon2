@@ -21,5 +21,5 @@ vae_module:
 logger:
   wandb:
     name: "vae_csp"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["vae", "csp"]

@@ -18,5 +18,5 @@ vae_module:
 logger:
   wandb:
     name: "vae_dng"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["vae", "dng"]

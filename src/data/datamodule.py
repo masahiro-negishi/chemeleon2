@@ -4,10 +4,11 @@ This module provides a LightningDataModule wrapper for loading and batching
 crystal structure data with support for Materials Project datasets.
 """
 
+from hydra.utils import instantiate
 from lightning import LightningDataModule
+from omegaconf import DictConfig
 from torch_geometric.loader import DataLoader
 
-from src.data.components.mp_dataset import MPDataset
 from src.data.schema import CrystalBatch
 
 
@@ -16,21 +17,16 @@ class DataModule(LightningDataModule):
 
     def __init__(
         self,
-        data_dir: str,
+        dataset: DictConfig,
         batch_size: int,
-        dataset_type: str = "mp",
-        target_condition: str | None = None,
-        mace_features: bool = False,
         num_workers: int = 0,
         pin_memory: bool = True,
+        name: str | None = None,
     ) -> None:
         super().__init__()
         # Configs for dataset
-        self.dataset_type = dataset_type
-        self.data_dir = data_dir
-        self.target_condition = target_condition
-        self.mace_features = mace_features
-        print(f"Data directory: {self.data_dir}")
+        self.dataset_config = dataset
+        self.name = name
 
         # Configs for dataloader
         self.batch_size = batch_size
@@ -42,32 +38,12 @@ class DataModule(LightningDataModule):
         self.val_dataset = None
         self.test_dataset = None
 
-    @property
-    def dataset_cls(self):
-        """Return the dataset class based on the dataset type."""
-        return MPDataset
-
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
-            self.train_dataset = self.dataset_cls(
-                root=self.data_dir,
-                split="train",
-                target_condition=self.target_condition,
-                mace_features=self.mace_features,
-            )
-            self.val_dataset = self.dataset_cls(
-                root=self.data_dir,
-                split="val",
-                target_condition=self.target_condition,
-                mace_features=self.mace_features,
-            )
+            self.train_dataset = instantiate(self.dataset_config, split="train")
+            self.val_dataset = instantiate(self.dataset_config, split="val")
         if stage == "test" or stage is None:
-            self.test_dataset = self.dataset_cls(
-                root=self.data_dir,
-                split="test",
-                target_condition=self.target_condition,
-                mace_features=self.mace_features,
-            )
+            self.test_dataset = instantiate(self.dataset_config, split="test")
 
     def train_dataloader(self) -> DataLoader:
         loader = DataLoader(

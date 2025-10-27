@@ -1,0 +1,7 @@
+_target_: src.vae_module.encoders.crystal_transformer.CrystalTransformerEncoder
+
+max_num_elements: 100
+d_model: 256
+n_frequencies: 100
+nhead: 4
+num_layers: 6

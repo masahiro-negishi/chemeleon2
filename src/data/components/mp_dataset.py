@@ -1,8 +1,4 @@
-"""Materials Project dataset implementation for crystal structure data.
-
-This module provides PyTorch Geometric InMemoryDataset for loading and
-processing Materials Project crystal structures with optional MACE features.
-"""
+"""Materials Project dataset implementation for crystal structure data."""
 
 import os
 import warnings
@@ -11,11 +7,13 @@ from collections.abc import Callable, Iterable
 import h5py
 import pandas as pd
 import torch
+from ase import Atoms
 from pymatgen.core import Lattice, Structure
 from torch_geometric.data import Data, InMemoryDataset
 from tqdm import tqdm
 
 from src.data.dataset_util import pmg_structure_to_pyg_data
+from src.data.graph_utils import radius_graph_pbc
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pymatgen")
 
@@ -27,6 +25,10 @@ class MPDataset(InMemoryDataset):
         self,
         root: str,
         split: str,
+        compute_radius_graph: bool = False,
+        r_cutoff: float = 6.0,
+        max_neighbors: int | None = None,
+        compute_edge_vectors: bool = True,
         target_condition: str | Iterable[str] | None = None,
         mace_features: bool = False,
         transform: Callable[[Data], Data] | None = None,
@@ -37,12 +39,20 @@ class MPDataset(InMemoryDataset):
         Args:
             root: Root directory containing dataset files.
             split: Dataset split name (train/val/test).
+            compute_radius_graph: Whether to compute radius graph with PBC.
+            r_cutoff: Maximum radius (cutoff) for graph edges.
+            max_neighbors: Maximum number of neighbors per atom (None for no limit).
+            compute_edge_vectors: Whether to compute edge vectors and distances.
             target_condition: Optional target property for conditioning.
             mace_features: Whether to load MACE structural features.
             transform: Optional transform to apply on-the-fly.
             pre_transform: Optional transform to apply during processing.
         """
         self.split = split
+        self.r_cutoff = r_cutoff
+        self.compute_radius_graph = compute_radius_graph
+        self.max_neighbors = max_neighbors
+        self.compute_edge_vectors = compute_edge_vectors
         self.target_condition = target_condition
         self.mace_features = mace_features
 
@@ -132,6 +142,22 @@ class MPDataset(InMemoryDataset):
             PyG Data object with structure and optional conditions/features.
         """
         data = super().get(idx)
+
+        # Dynamically compute radius graph if specified
+        if self.compute_radius_graph:
+            atoms = Atoms(
+                numbers=data.atom_types.detach().cpu().numpy(),
+                cell=data.lattices.squeeze(0).detach().cpu().numpy(),
+                positions=data.cart_coords.detach().cpu().numpy(),
+                pbc=True,
+            )
+            edge_graph = radius_graph_pbc(
+                atoms=atoms,
+                r_cutoff=self.r_cutoff,
+                max_neighbors=self.max_neighbors,
+                compute_edge_vectors=self.compute_edge_vectors,
+            )
+            data.update(edge_graph)  # type: ignore
 
         # Dynamically attach condition if specified
         if self.target_condition is not None:

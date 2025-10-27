@@ -13,10 +13,11 @@ ldm_module:
   vae_ckpt_path: ckpts/alex_mp_20/vae/csp_2bmsfrwy_v1.ckpt
 
 data:
-  target_condition: null
+  dataset:
+    target_condition: null
 
 logger:
   wandb:
     name: "ldm_csp"
-    group: "${task_name}/${data.dataset_type}"
+    group: "${task_name}/${data.name}"
     tags: ["ldm", "csp", "null_condition"]

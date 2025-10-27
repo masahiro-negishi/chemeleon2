@@ -18,6 +18,7 @@ dependencies = [
     "hydra-core==1.3.2",
     "hydra-optuna-sweeper==1.2.0",
     "lightning>=2.5.4",
+    "matscipy>=1.1.0",
     "mp-api>=0.45.8",
     "peft>=0.17.1",
     "pydantic>=2.11.7",
@@ -60,6 +61,7 @@ markers = [
     "baseline: Baseline tests to validate code before/after formatting",
     "unit: Unit tests for individual components",
     "integration: Integration tests for component interactions",
+    "symmetry: Symmetry property tests for equivariance and invariance",
     "slow: Tests that take significant time to run",
 ]
 addopts = ["-ra", "-q", "--strict-markers"]
@@ -105,8 +107,10 @@ ignore = [
     "D107",    # Missing docstring in __init__
     "D200",    # One-line docstring should fit on one line
     "D205",    # Missing blank line after summary
+    "D415",    # First line should end with a period
     "D417",    # Missing argument description in docstring
     "E501",    # Line too long (existing code has long lines)
+    "E741",    # Ambiguous variable name (l, O, I)
     "N802",    # Function name should be lowercase
     "N806",    # Variable in function should be lowercase
     "N812",    # Lowercase imported as non-lowercase

@@ -22,8 +22,25 @@ trainer:
 
 vae_module:
   atom_type_predict: true
+
+  loss_weights:
+    atom_types: 1.0
+    lengths: 1.0
+    angles: 1.0
+    frac_coords: 10.0
+    kl: 1e-5
+    fa: 0.0
+
+  encoder:
+    num_layers: 4
+
   decoder:
-    atom_index_embedding: true # TODO: change to false
+    num_layers: 4
+    d_model: 256
+    nhead: 4
+    dim_feedforward: 1024
+    atom_index_embedding: false
+
   augmentation:
     translate: false
     rotate: false

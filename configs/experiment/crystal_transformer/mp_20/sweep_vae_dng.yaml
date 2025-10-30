@@ -1,0 +1,91 @@
+# @package _global_
+
+# Inherit all settings from vae_dng.yaml in the same directory
+defaults:
+  - /experiment/crystal_transformer/mp_20/vae_dng
+  - _self_
+
+# Name of the sweep
+name: vae-crystal-transformer-sweep
+
+# Override trainer settings for sweep
+trainer:
+  max_epochs: 1000
+
+# Override logger settings for sweep
+logger:
+  wandb:
+    name: "vae_dng_crystal_transformer_sweep"
+    group: "${task_name}/${data.name}/crystal_transformer_sweep"
+    tags: ["vae", "dng", "crystal_transformer", "sweep"]
+    log_model: False
+
+# Number of sweep runs to perform
+sweep_count: 100
+
+# Weights & Biases sweep configuration
+sweep_config:
+  method: bayes # random, grid, or bayes
+  metric:
+    name: val/structure_matching
+    goal: maximize
+
+  parameters:
+    # Dataset parameters
+    data.dataset.r_cutoff:
+      values: [4.0, 5.0, 6.0]
+
+    data.dataset.max_neighbors:
+      values: [null, 12, 24]
+
+    # VAE Hyperparameters
+    trainer.gradient_clip_val:
+      values: [5.0, 10.0]
+
+    vae_module.optimizer.lr:
+      values: [1e-4]
+
+    vae_module.optimizer.weight_decay:
+      values: [0, 1e-8, 1e-4, 1e-2]
+
+    vae_module.latent_dim:
+      values: [1, 2, 4, 8]
+
+    # Encoder
+    vae_module.encoder.num_layers:
+      values: [2, 4, 6]
+
+    vae_module.encoder.n_frequencies:
+      values: [50, 100, 200]
+
+    vae_module.encoder.dropout:
+      values: [0.0, 0.1, 0.2, 0.3]
+
+    # Decoder
+    vae_module.decoder.num_layers:
+      values: [2, 4, 6]
+
+    vae_module.decoder.d_model:
+      values: [128, 256, 512]
+
+    vae_module.decoder.nhead:
+      values: [4, 8]
+
+    vae_module.decoder.dim_feedforward:
+      values: [512, 1024, 2048]
+
+    vae_module.decoder.dropout:
+      values: [0.0, 0.1, 0.2, 0.3]
+
+    vae_module.decoder.norm_first:
+      values: [true, false]
+
+    vae_module.decoder.bias:
+      values: [true, false]
+
+    # Loss weights
+    vae_module.loss_weights.kl:
+      values: [1e-5]
+
+# Sweep ID to resume a sweep
+resume_sweep_id: null

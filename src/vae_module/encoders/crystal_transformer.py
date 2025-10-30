@@ -30,7 +30,7 @@ class SinusoidsEmbedding(nn.Module):
 class SparseTransformerLayer(nn.Module):
     """Sparse Periodic R-Trans with edge-based pair-specific attention."""
 
-    def __init__(self, hidden_dim=256, num_heads=4) -> None:
+    def __init__(self, hidden_dim=256, num_heads=4, dropout=0.0) -> None:
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -47,14 +47,17 @@ class SparseTransformerLayer(nn.Module):
 
         # Residual + LayerNorm
         self.norm1 = nn.LayerNorm(hidden_dim)
+        self.dropout1 = nn.Dropout(dropout)
 
         # Feed-forward network (2-layer MLP with GELU)
         self.ffn = nn.Sequential(
             nn.Linear(hidden_dim, 4 * hidden_dim),
             nn.GELU(),
+            nn.Dropout(dropout),
             nn.Linear(4 * hidden_dim, hidden_dim),
         )
         self.norm2 = nn.LayerNorm(hidden_dim)
+        self.dropout2 = nn.Dropout(dropout)
 
     def forward(
         self, h_n: torch.Tensor, h_e: torch.Tensor, edge_index: torch.Tensor
@@ -110,10 +113,10 @@ class SparseTransformerLayer(nn.Module):
         out = self.output_proj(out)
 
         # Residual connection + LayerNorm - Eq. 9
-        h_n = self.norm1(h_n + out)
+        h_n = self.norm1(h_n + self.dropout1(out))
 
         # Feed-forward network with residual
-        h_n = self.norm2(h_n + self.ffn(h_n))
+        h_n = self.norm2(h_n + self.dropout2(self.ffn(h_n)))
 
         return h_n
 
@@ -128,6 +131,7 @@ class CrystalTransformerEncoder(nn.Module):
         n_frequencies: int = 100,
         nhead: int = 4,
         num_layers: int = 6,
+        dropout: float = 0.0,
     ) -> None:
         super().__init__()
 
@@ -145,7 +149,9 @@ class CrystalTransformerEncoder(nn.Module):
         # Sparse Transformer layers
         self.layers = nn.ModuleList(
             [
-                SparseTransformerLayer(hidden_dim=d_model, num_heads=nhead)
+                SparseTransformerLayer(
+                    hidden_dim=d_model, num_heads=nhead, dropout=dropout
+                )
                 for _ in range(num_layers)
             ]
         )

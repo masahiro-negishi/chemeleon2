@@ -12,7 +12,6 @@ from pymatgen.core import Structure
 from src.data.data_augmentation import apply_augmentation, apply_noise
 from src.data.dataset_util import lattice_params_to_matrix_torch
 from src.data.schema import CrystalBatch, create_empty_batch
-from src.utils.timeout import timeout
 
 
 class VAEModule(LightningModule):
@@ -276,9 +275,7 @@ class VAEModule(LightningModule):
             if cond > 1e3:
                 continue
             try:
-                match = timeout(seconds=3, default=False, verbose=True)(self.sm.fit)(
-                    orig, rec
-                )
+                match = self.sm.fit(orig, rec)
                 if match:
                     structure_matching += 1
             except Exception as e:

@@ -49,7 +49,7 @@ class MPDataset(InMemoryDataset):
             pre_transform: Optional transform to apply during processing.
         """
         self.split = split
-        self.r_cutoff = r_cutoff
+        self.r_cutoff = float(r_cutoff)
         self.compute_radius_graph = compute_radius_graph
         self.max_neighbors = max_neighbors
         self.compute_edge_vectors = compute_edge_vectors

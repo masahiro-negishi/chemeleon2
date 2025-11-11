@@ -1,6 +1,11 @@
+
 # Chemeleon2
 
-A generative machine learning framework for crystal structure generation using Variational Autoencoders (VAE), Latent Diffusion Models (LDM), and Reinforcement Learning (RL).
+A reinforcement learning framework in latent diffusion models for crystal structure generation using group relative policy optimization.
+
+<p align="center">
+  <img src="assets/logo.png" alt="Chemeleon2 logo" width="260">
+</p>
 
 ## Overview
 
@@ -9,6 +14,10 @@ Chemeleon2 implements a three-stage pipeline for crystal structure generation:
 1. **VAE Module**: Encodes crystal structures into latent space representations
 2. **LDM Module**: Generates structures in latent space using diffusion
 3. **RL Module**: Fine-tunes the LDM with reward functions
+
+<p align="center">
+  <img src="assets/toc.png" alt="Chemeleon2 pipeline overview" width="640">
+</p>
 
 ## Installation
 
@@ -45,14 +54,9 @@ For PyTorch 2.7.0 with CUDA 12.8:
 
 </details>
 
-
 ## Quick Start
 
-For a complete walkthrough of sampling and evaluation, see [tutorial.ipynb](./tutorial.ipynb). The tutorial covers:
-
-- Generating crystal structures from trained models
-- Evaluating structures with various metrics
-- Analyzing benchmark results
+For a simple walkthrough of sampling and evaluation, see [tutorial.ipynb](./tutorial.ipynb).
 
 ## Training
 
@@ -61,7 +65,7 @@ Chemeleon2 uses a three-stage training pipeline: VAE → LDM → RL.
 For detailed instructions, see:
 
 - [Training Guide](docs/TRAINING.md) - VAE, LDM, RL, and predictor training
-- [Evaluation Guide](docs/EVALUATION.md) - Model evaluation and metrics
+- [Evaluation Guide](docs/EVALUATION.md) - Sampling and model evaluation/metrics
 
 ## Benchmarks
 
@@ -69,8 +73,7 @@ To benchmark de novo generation (DNG), 10,000 sampled structures are available i
 
 - **MP-20**: [`chemeleon2_rl_dng_mp_20.json.gz`](benchmarks/dng/chemeleon2_rl_dng_mp_20.json.gz) - 10,000 generated structures using RL-trained model on MP-20
 - **Alex-MP-20**: [`chemeleon2_rl_dng_alex_mp_20.json.gz`](benchmarks/dng/chemeleon2_rl_dng_alex_mp_20.json.gz) - 10,000 generated structures using RL-trained model on Alex-MP-20
-
-Load them using `from monty.serialization import loadfn`
+The compressed json files can be load them using `from monty.serialization import loadfn`.
 
 ## Contributing
 

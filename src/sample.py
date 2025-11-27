@@ -12,7 +12,6 @@ from pymatgen.core import Composition, Structure
 from src.data.num_atom_distributions import NUM_ATOM_DISTRIBUTIONS
 from src.data.schema import create_empty_batch
 from src.ldm_module.ldm_module import LDMModule
-from src.paths import DEFAULT_LDM_CKPT_PATH, DEFAULT_VAE_CKPT_PATH
 
 
 def sample(
@@ -79,6 +78,8 @@ def sample(
 
     # Set default checkpoint path if not provided
     if ldm_ckpt_path is None and vae_ckpt_path is None:
+        from src.paths import DEFAULT_LDM_CKPT_PATH, DEFAULT_VAE_CKPT_PATH
+
         ldm_ckpt_path = DEFAULT_LDM_CKPT_PATH
         vae_ckpt_path = DEFAULT_VAE_CKPT_PATH
     assert ldm_ckpt_path is not None, "LDM checkpoint path must be provided."

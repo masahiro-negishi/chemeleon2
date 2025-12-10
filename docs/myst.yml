@@ -9,9 +9,6 @@ project:
     - reinforcement learning
     - latent diffusion model
     - materials science
-  authors:
-    - name: Hyunsoo Park
-    - name: Aron Walsh
   github: https://github.com/hspark1212/chemeleon2
   license: MIT
   toc:
@@ -44,3 +41,4 @@ site:
   options:
     favicon: ../assets/logo.png
     logo: ../assets/logo.png
+    # style: custom.css

@@ -1,6 +1,14 @@
+---
+authors:
+  - name: Hyunsoo Park
+    affiliation: WMD Group, Imperial College London
+  - name: Aron Walsh
+    affiliation: WMD Group, Imperial College London
+---
+
 # Chemeleon2
 
-A reinforcement learning framework in latent diffusion models for crystal structure generation using group relative policy optimization.
+A reinforcement learning framework in latent diffusion models for crystal structure generation using group relative policy optimization (GRPO).
 
 ```{figure} ../assets/logo.png
 :alt: Chemeleon2 logo
@@ -14,7 +22,7 @@ Chemeleon2 implements a three-stage pipeline for crystal structure generation:
 
 1. **VAE Module**: Encodes crystal structures into latent space representations
 2. **LDM Module**: Samples crystal structures in latent space using diffusion Transformer
-3. **RL Module**: Fine-tunes the LDM with reward functions
+3. **RL Module**: Fine-tunes the LDM with reinforcement learning
 
 ```{figure} ../assets/toc.png
 :alt: Chemeleon2 pipeline overview

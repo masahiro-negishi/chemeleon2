@@ -247,6 +247,12 @@ jupyter-book build docs
 
 # View at docs/_build/html/index.html
 cd docs && jupyter-book build --html
+
+# Serve locally
+python -m http.server 8000 --directory docs/_build/html
+
+# Automated deployment verification
+myst start
 ```
 
 ---
@@ -284,3 +290,16 @@ cd docs && jupyter-book build --html
     needs: build
     runs-on: ubuntu-latest
 ```
+
+### 3. Restore GitHub Pages environment protection
+**Location:** GitHub Settings → Environments → github-pages
+- [ ] Remove `feat/custom-reward-001-docs` from **Deployment branches**
+- [ ] Restore to **Selected branches** with only `main` branch allowed
+
+**Steps:**
+1. Go to https://github.com/hspark1212/chemeleon2/settings/environments
+2. Click **github-pages** environment
+3. In **Deployment branches** section:
+   - Remove feat branches that were added for debugging
+   - Keep only `main` branch
+4. Save changes

@@ -246,20 +246,35 @@ Hooks run automatically on `git commit`. To run manually:
 
 ### Import Errors
 
+If you encounter import errors, reinstall the package in editable mode:
+
 ```bash
-# Reinstall in editable mode
+# Using uv sync (recommended)
+uv sync --extra dev
+
+# Or using uv pip
+source .venv/bin/activate
 uv pip install -e ".[dev]"
 ```
 
 ### Dependency Issues
 
-```bash
-# Sync dependencies
-uv sync
+If you have dependency conflicts or installation issues:
 
-# Clear cache and reinstall
+**Option 1: Using uv sync (recommended)**
+```bash
+# Clear and reinstall with uv sync
 rm -rf .venv
-uv sync
+uv sync --extra dev
+.venv/bin/pre-commit install
+```
+
+**Option 2: Using uv pip**
+```bash
+# Clear and reinstall with uv pip
+rm -rf .venv
+uv venv
+source .venv/bin/activate
 uv pip install -e ".[dev]"
 .venv/bin/pre-commit install
 ```

@@ -17,16 +17,24 @@ Set up Jupyter Book documentation with GitHub Pages deployment for the Chemeleon
 
 ```
 docs/
-├── _config.yml                  # Jupyter Book configuration
-├── _toc.yml                     # Table of contents
+├── myst.yml                     # MyST v2 configuration with inline TOC
 ├── index.md                     # Landing page
 ├── getting-started/
-│   ├── installation.md          # Installation guide (from README)
+│   ├── installation.md          # Installation guide
 │   └── quickstart.md            # Quick start guide
 ├── user-guide/
-│   ├── training.md              # ← Migrated from TRAINING.md
-│   ├── evaluation.md            # ← Migrated from EVALUATION.md
-│   └── custom-rewards.md        # ← Migrated from TRAINING_CUSTOM_RL.md
+│   ├── evaluation.md            # Evaluation guide
+│   ├── training/                # Training guides (split by module)
+│   │   ├── index.md             # Overview: Hydra, checkpoints, WandB
+│   │   ├── vae.md               # VAE training
+│   │   ├── ldm.md               # LDM training
+│   │   ├── rl.md                # RL training
+│   │   └── predictor.md         # Predictor training
+│   └── rewards/                 # Custom rewards tutorials
+│       ├── index.md             # Overview + built-in components
+│       ├── atomic-density.md    # Tutorial 1: Simple custom reward
+│       ├── dng-reward.md        # Tutorial 2: DNG (paper)
+│       └── predictor-reward.md  # Tutorial 3: Predictor-based RL
 ├── architecture/
 │   ├── index.md                 # Architecture overview with diagrams
 │   ├── vae-module.md            # VAE module explanation
@@ -34,8 +42,8 @@ docs/
 │   ├── rl-module.md             # RL module explanation
 │   └── data-pipeline.md         # Data loading and utilities
 ├── api/
-│   └── index.md                 # API reference (autodoc2 generated)
-└── contributing.md              # ← Migrated from CONTRIBUTING.md
+│   └── index.md                 # API reference
+└── contributing.md              # Development guide
 ```
 
 ---

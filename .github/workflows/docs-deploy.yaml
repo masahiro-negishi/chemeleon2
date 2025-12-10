@@ -41,6 +41,8 @@ jobs:
 
       - name: Build documentation
         working-directory: docs
+        env:
+          BASE_URL: /chemeleon2
         run: jupyter-book build --html
 
       - name: Upload artifact

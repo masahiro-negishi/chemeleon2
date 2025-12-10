@@ -52,7 +52,7 @@ vae_ckpt_path: ckpts/mp_20/vae/my_checkpoint.ckpt
 - `mp_20_ldm` - LDM with RL fine-tuning on MP-20
 - `alex_mp_20_ldm` - LDM with RL fine-tuning on Alex MP-20
 
-See example configs in [rl_custom_reward.yaml](../configs/experiment/rl_custom_reward.yaml) for usage.
+See example configs in `configs/experiment/rl_custom_reward.yaml` for usage.
 
 ## 1. Train VAE (First Stage)
 
@@ -71,7 +71,7 @@ python src/train_vae.py experiment=mp_20/vae_dng ckpt_path=ckpts/vae_checkpoint.
 
 **Available VAE experiments:**
 
-- [`mp_20/vae_dng`](../configs/experiment/mp_20/vae_dng.yaml) - VAE for de novo generation on MP-20
+- `mp_20/vae_dng` - VAE for de novo generation on MP-20
 
 ## 2. Train LDM (Second Stage - requires trained VAE)
 
@@ -97,16 +97,16 @@ python src/train_ldm.py experiment=alex_mp_20_bandgap/ldm_bandgap_lora
 
 Unconditional generation:
 
-- [`mp_20/ldm_null`](../configs/experiment/mp_20/ldm_null.yaml) - Unconditional generation on MP-20
+- `mp_20/ldm_null` - Unconditional generation on MP-20
 
 Conditional generation:
 
-- [`mp_20/ldm_composition`](../configs/experiment/mp_20/ldm_composition.yaml) - Conditioned on chemical composition
-- [`alex_mp_20_bandgap/ldm_bandgap`](../configs/experiment/alex_mp_20_bandgap/ldm_bandgap.yaml) - Conditioned on band gap values
+- `mp_20/ldm_composition` - Conditioned on chemical composition
+- `alex_mp_20_bandgap/ldm_bandgap` - Conditioned on band gap values
 
 LoRA fine-tuning:
 
-- [`alex_mp_20_bandgap/ldm_bandgap_lora`](../configs/experiment/alex_mp_20_bandgap/ldm_bandgap_lora.yaml) - LoRA fine-tuning for band gap
+- `alex_mp_20_bandgap/ldm_bandgap_lora` - LoRA fine-tuning for band gap
 
 ## 3. Train RL (Third Stage - requires trained LDM)
 
@@ -128,8 +128,8 @@ python src/train_rl.py experiment=mp_20/rl_dng \
 
 **Available RL experiments:**
 
-- [`mp_20/rl_dng`](../configs/experiment/mp_20/rl_dng.yaml) - De novo generation reward
-- [`alex_mp_20_bandgap/rl_bandgap`](../configs/experiment/alex_mp_20_bandgap/rl_bandgap.yaml) - Band gap optimization
+- `mp_20/rl_dng` - De novo generation reward
+- `alex_mp_20_bandgap/rl_bandgap` - Band gap optimization
 
 ## 4. Train Predictor (Optional)
 
@@ -148,7 +148,7 @@ python src/train_predictor.py \
 
 **Available Predictor experiments:**
 
-- [`alex_mp_20_bandgap/predictor_dft_band_gap`](../configs/experiment/alex_mp_20_bandgap/predictor_dft_band_gap.yaml) - Predict DFT band gap values
+- `alex_mp_20_bandgap/predictor_dft_band_gap` - Predict DFT band gap values
 
 ## Configuration Tips
 

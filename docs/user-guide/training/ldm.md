@@ -4,11 +4,7 @@ The Latent Diffusion Model (LDM) is the second stage of the Chemeleon2 pipeline.
 
 ## What LDM Does
 
-The LDM uses a diffusion process to generate latent vectors:
-
-```
-Noise z_T → Denoise → ... → Denoise → Clean z_0 → VAE Decoder → Crystal Structure
-```
+The LDM is the second stage of Chemeleon2 that learns to generate crystal structures by denoising in the VAE's latent space. For architectural details, see [LDM Module](../../architecture/ldm-module.md).
 
 Key components (see [`src/ldm_module/ldm_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/ldm_module/ldm_module.py)):
 - **Diffusion Transformer (DiT)**: Predicts noise at each timestep
@@ -17,15 +13,20 @@ Key components (see [`src/ldm_module/ldm_module.py`](https://github.com/hspark12
 
 ## Prerequisites
 
-LDM training requires a **trained VAE checkpoint**:
+LDM training requires a **trained VAE checkpoint**. The VAE encodes crystal structures into the latent space where the LDM operates.
+
+```yaml
+# In config files
+ldm_module:
+  vae_ckpt_path: ${hub:mp_20_vae}  # Or use local path
+```
 
 ```bash
-# Use hub checkpoint
-ldm_module.vae_ckpt_path: ${hub:mp_20_vae}
-
-# Or use local checkpoint
-ldm_module.vae_ckpt_path: ckpts/my_vae.ckpt
+# In CLI
+python src/train_ldm.py ldm_module.vae_ckpt_path='${hub:mp_20_vae}'
 ```
+
+See [Checkpoint Management](index.md#checkpoint-management) for available checkpoints.
 
 ## Quick Start
 
@@ -42,6 +43,10 @@ Example config: [`configs/experiment/mp_20/ldm_null.yaml`](https://github.com/hs
 :::
 
 ## Training Modes
+
+:::{note}
+LDM supports conditional generation using **classifier-free guidance**, which guides the diffusion process during training. This is different from RL-based optimization (the next stage). But RL fine-tuning is more recommended for conditioned generation.
+:::
 
 ### Unconditional Generation
 
@@ -85,15 +90,20 @@ python src/train_ldm.py experiment=mp_20/ldm_null \
     data.batch_size=64
 ```
 
-### LoRA Fine-tuning
+### Advanced: LoRA Fine-tuning
 
-Fine-tune a pre-trained LDM with Low-Rank Adaptation:
+Fine-tune a pre-trained LDM with Low-Rank Adaptation (LoRA):
 
 ```bash
 python src/train_ldm.py experiment=alex_mp_20_bandgap/ldm_bandgap_lora
 ```
 
-LoRA enables efficient fine-tuning by only updating low-rank adapter weights.
+LoRA enables efficient fine-tuning by only updating low-rank adapter weights instead of all model parameters. This approach:
+- **Reduces memory usage**: Only adapter weights require gradients
+- **Faster training**: Fewer parameters to update
+- **Prevents catastrophic forgetting**: Base model weights remain frozen
+
+Use LoRA when fine-tuning a pre-trained LDM on new datasets or conditions.
 
 ## Configuration
 
@@ -102,10 +112,9 @@ LoRA enables efficient fine-tuning by only updating low-rank adapter weights.
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `num_diffusion_steps` | 1000 | Number of diffusion timesteps |
-| `noise_schedule` | cosine | Noise schedule (linear, cosine) |
-| `hidden_dim` | 512 | DiT hidden dimension |
-| `num_layers` | 12 | Number of DiT layers |
-| `num_heads` | 8 | Number of attention heads |
+| `hidden_dim` | 768 | DiT hidden dimension (dit_b config) |
+| `num_layers` | 12 | Number of DiT layers (depth) |
+| `num_heads` | 12 | Number of attention heads |
 
 ### Example Config Override
 
@@ -134,13 +143,9 @@ Key metrics to watch in WandB:
 
 ### Typical Training
 
-- **Duration**: ~500-1000 epochs
-- **Batch size**: 32-128 depending on GPU memory
+- **Duration**: Up to 5000 epochs (default), with early stopping after 200 epochs without improvement
+- **Batch size**: 256 (default), can be reduced to 32-128 for limited GPU memory
 - **Learning rate**: 1e-4 (default)
-
-### Sampling During Training
-
-The training script periodically generates samples to monitor quality. Check the generated structures in WandB.
 
 ## Next Steps
 

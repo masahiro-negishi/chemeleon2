@@ -1,6 +1,6 @@
 # RL Module
 
-The Reinforcement Learning module (`src/rl_module/`) fine-tunes the LDM using Group Relative Policy Optimization (GRPO).
+The Reinforcement Learning module ([`src/rl_module/`](https://github.com/hspark1212/chemeleon2/tree/main/src/rl_module)) fine-tunes the LDM using Group Relative Policy Optimization (GRPO).
 
 ## Algorithm Overview
 
@@ -18,7 +18,7 @@ Where:
 
 ### RLModule
 
-PyTorch Lightning module for RL fine-tuning:
+PyTorch Lightning module for RL fine-tuning ([`src/rl_module/rl_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/rl_module.py)):
 
 ```python
 from src.rl_module import RLModule
@@ -37,7 +37,7 @@ rl_module = RLModule(
 
 ### RewardComponent (Base Class)
 
-Abstract base for all reward components:
+Abstract base for all reward components ([`src/rl_module/components.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py)):
 
 ```python
 from src.rl_module.components import RewardComponent
@@ -61,7 +61,7 @@ class MyCustomReward(RewardComponent):
 
 ### ReinforceReward
 
-Aggregates multiple reward components:
+Aggregates multiple reward components ([`src/rl_module/reward.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/reward.py)):
 
 ```python
 from src.rl_module.reward import ReinforceReward
@@ -86,7 +86,7 @@ reward = ReinforceReward(
 
 ## Configuration
 
-See `configs/rl_module/` for RL configurations:
+See [`configs/rl_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/rl_module) for RL configurations:
 
 ```yaml
 # configs/rl_module/rl_dng.yaml
@@ -113,4 +113,6 @@ python src/train_rl.py experiment=mp_20/rl_dng
 python src/train_rl.py experiment=alex_mp_20_bandgap/rl_bandgap
 ```
 
-See [Training Guide](../user-guide/training.md) and [Custom Rewards](../user-guide/custom-rewards.md) for more details.
+Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/train_rl.py)
+
+See [Training Guide](../user-guide/training/index.md) and [Custom Rewards](../user-guide/custom-rewards.md) for more details.

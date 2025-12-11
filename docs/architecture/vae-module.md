@@ -1,39 +1,39 @@
 # VAE Module
 
-The Variational Autoencoder module (`src/vae_module/`) encodes crystal structures into continuous latent representations and decodes them back.
+The Variational Autoencoder module ([`src/vae_module/`](https://github.com/hspark1212/chemeleon2/tree/main/src/vae_module)) encodes crystal structures into continuous latent representations and decodes them back.
 
 ## Architecture
 
 ```{mermaid}
 flowchart TB
-    subgraph Input
-        A[Crystal Structure<br/>atom_types, frac_coords, lattice]
-    end
+    A[Crystal Structure<br/>atom_types, frac_coords, lattice]
 
-    subgraph Encoder
-        B[Atom Type Embedding]
-        C[Transformer Encoder]
-        D[Quant Conv → μ, σ]
-    end
+    B[Atom Type Embedding]
+    C[Transformer Encoder]
+    D[Quant Conv → μ, σ]
 
-    subgraph Latent
-        E[z ~ N μ, σ²]
-    end
+    E[Latent z ~ N μ, σ²]
 
-    subgraph Decoder
-        F[Post Quant Conv]
-        G[Transformer Decoder]
-        H[atom_types, frac_coords, lengths, angles]
-    end
+    F[Post Quant Conv]
+    G[Transformer Decoder]
+    H[Reconstructed Structure<br/>atom_types, frac_coords, lengths, angles]
 
-    A --> B --> C --> D --> E --> F --> G --> H
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+
+    style E fill:#ffffcc
 ```
 
 ## Key Classes
 
 ### VAEModule
 
-The main PyTorch Lightning module implementing the VAE:
+The main PyTorch Lightning module implementing the VAE ([`src/vae_module/vae_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/vae_module/vae_module.py)):
 
 ```python
 from src.vae_module import VAEModule
@@ -66,16 +66,15 @@ Represents the latent distribution with diagonal covariance:
 
 The VAE training minimizes:
 
-$$\mathcal{L} = \lambda_1 \mathcal{L}_{recon} + \lambda_2 \mathcal{L}_{KL} + \lambda_3 \mathcal{L}_{FA}$$
+$$\mathcal{L} = \lambda_1 \mathcal{L}_{recon} + \lambda_2 \mathcal{L}_{KL}$$
 
 Where:
 - $\mathcal{L}_{recon}$: Reconstruction loss (atom types, coordinates, lattice)
 - $\mathcal{L}_{KL}$: KL divergence regularization
-- $\mathcal{L}_{FA}$: Foundation Alignment loss (optional, with MACE features)
 
 ## Configuration
 
-See `configs/vae_module/` for VAE configurations:
+See [`configs/vae_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/vae_module) for VAE configurations:
 
 ```yaml
 # configs/vae_module/vae_dng.yaml
@@ -99,4 +98,6 @@ latent_dim: 256
 python src/train_vae.py experiment=mp_20/vae_dng
 ```
 
-See [Training Guide](../user-guide/training.md) for more details.
+Training script: [`src/train_vae.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/train_vae.py)
+
+See [Training Guide](../user-guide/training/index.md) for more details.

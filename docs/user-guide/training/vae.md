@@ -4,16 +4,7 @@ The Variational Autoencoder (VAE) is the first stage of the Chemeleon2 pipeline.
 
 ## What VAE Does
 
-The VAE compresses crystal structure information into fixed-size latent vectors:
-
-```
-Crystal Structure (atoms, coords, lattice) → Encoder → Latent Vector z → Decoder → Reconstructed Structure
-```
-
-Key components (see [`src/vae_module/vae_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/vae_module/vae_module.py)):
-- **Encoder**: Graph neural network that processes atomic positions and lattice
-- **Latent Space**: Continuous representation where diffusion operates
-- **Decoder**: Reconstructs crystal structures from latent vectors
+The VAE is the first stage of Chemeleon2 that encodes crystal structures into continuous latent space representations. For architectural details, see [VAE Module](../../architecture/vae-module.md).
 
 ## Quick Start
 
@@ -56,17 +47,17 @@ python src/train_vae.py experiment=mp_20/vae_dng \
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `latent_dim` | 256 | Dimension of latent space |
-| `hidden_dim` | 256 | Hidden dimension in encoder/decoder |
-| `num_layers` | 4 | Number of message passing layers |
-| `kl_weight` | 1e-4 | KL divergence loss weight |
+| `latent_dim` | 8 | Dimension of latent space |
+| `hidden_dim` | 512 | Hidden dimension in encoder/decoder (d_model) |
+| `num_layers` | 8 | Number of transformer layers |
+| `kl_weight` | 1e-5 | KL divergence loss weight |
 
 ### Example Config Override
 
 ```bash
 python src/train_vae.py experiment=mp_20/vae_dng \
-    vae_module.latent_dim=512 \
-    vae_module.kl_weight=1e-3
+    vae_module.latent_dim=16 \
+    vae_module.kl_weight=1e-4
 ```
 
 ## Available Experiments
@@ -86,16 +77,9 @@ Key metrics to watch in WandB:
 
 ### Typical Training
 
-- **Duration**: ~1000-3000 epochs
+- **Duration**: ~1000-5000 epochs
 - **Batch size**: 64-256 depending on GPU memory
 - **Learning rate**: 1e-4 (default)
-
-### Checkpoint Naming
-
-After training, checkpoints are saved in:
-```
-ckpts/{experiment_name}/vae/
-```
 
 ## Next Steps
 

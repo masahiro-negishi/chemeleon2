@@ -58,6 +58,10 @@ mp-1234,"data_...",2.5
 mp-5678,"data_...",0.0
 ```
 
+:::{important}
+The `target_condition` parameter in your config must **exactly match** the column name in your CSV files. For example, if your CSV has a column named `band_gap`, then use `target_condition: band_gap` in the config.
+:::
+
 ### Compute Normalization Statistics
 
 Calculate mean and std for your target property:
@@ -102,7 +106,6 @@ data:
   batch_size: 256
   dataset_type: "my_dataset"
   target_condition: band_gap
-  num_workers: 16
 
 predictor_module:
   vae:
@@ -122,10 +125,10 @@ logger:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `hidden_dim` | 256 | Projection network hidden dimension |
+| `hidden_dim` | Dynamic | Projection network dimensions (input_dim//4, input_dim//2) |
 | `num_layers` | 3 | Number of projection layers |
 | `dropout` | 0.1 | Dropout rate |
-| `use_encoder_features` | false | Concatenate encoder hidden features |
+| `use_encoder_features` | True | Concatenate encoder hidden features |
 
 ## Multiple Properties
 
@@ -153,9 +156,9 @@ Key metrics in WandB:
 
 ### Typical Training
 
-- **Duration**: ~200-500 epochs
-- **Batch size**: 256-512
-- **Early stopping**: Based on `val/loss`
+- **Duration**: Up to 1000 epochs (default), with early stopping after 200 epochs without improvement
+- **Batch size**: 256 (default), can be increased to 512 for faster training
+- **Learning rate**: 1e-3 (default)
 
 ### Verifying Quality
 

@@ -4,11 +4,7 @@ Reinforcement Learning (RL) is the third stage of the Chemeleon2 pipeline. It fi
 
 ## What RL Does
 
-RL optimizes the generation process using reward signals:
-
-```
-LDM generates structures → Compute rewards → Update LDM to increase rewards
-```
+The RL module is the third stage of Chemeleon2 that fine-tunes the LDM to generate crystal structures optimized for specific material properties. For architectural details, see [RL Module](../../architecture/rl-module.md).
 
 Key concepts (see [`src/rl_module/rl_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/rl_module.py)):
 - **GRPO Algorithm**: Group Relative Policy Optimization for efficient training
@@ -17,15 +13,23 @@ Key concepts (see [`src/rl_module/rl_module.py`](https://github.com/hspark1212/c
 
 ## Prerequisites
 
-RL training requires:
-1. **Trained LDM checkpoint**
-2. **Trained VAE checkpoint** (usually loaded via LDM)
+RL training requires both **trained LDM** and **VAE checkpoints**. The LDM is fine-tuned with reward signals, while the VAE decodes latent vectors to structures for reward computation.
 
 ```yaml
+# In config files
 rl_module:
-  ldm_ckpt_path: ${hub:mp_20_ldm_base}
+  ldm_ckpt_path: ${hub:mp_20_ldm_base}  # Or use local path
   vae_ckpt_path: ${hub:mp_20_vae}
 ```
+
+```bash
+# In CLI
+python src/train_rl.py \
+  rl_module.ldm_ckpt_path='${hub:mp_20_ldm_base}' \
+  rl_module.vae_ckpt_path='${hub:mp_20_vae}'
+```
+
+See [Checkpoint Management](index.md#checkpoint-management) for available checkpoints.
 
 ## Quick Start
 
@@ -38,7 +42,7 @@ Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/bl
 Example config: [`configs/experiment/mp_20/rl_dng.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/experiment/mp_20/rl_dng.yaml)
 
 :::{tip}
-**Example training run**: See [this W&B run](https://wandb.ai/hspark1212/chemeleon2/groups/train_rl%2Fmp_20/runs/6xz1npuj) for a successful RL training example with DNG reward on MP-20 dataset.
+**Example training run**: See [this W&B run](https://wandb.ai/hspark1212/chemeleon2/groups/train_rl%2Fmp_20/runs/6xz1npuj) for a successful RL training example with DNG reward (improving S.U.N metrics) on MP-20 dataset.
 :::
 
 ## Training Commands
@@ -68,17 +72,19 @@ Chemeleon2 uses **Group Relative Policy Optimization (GRPO)** for efficient RL t
 3. **Relative Ranking**: Compare rewards within each group
 4. **Policy Update**: Reinforce high-reward structures relative to group
 
-### Key Hyperparameters
+### Key GRPO Hyperparameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `num_group_samples` | 64 | Structures per group (higher = more stable) |
-| `group_reward_norm` | true | Normalize rewards within group |
-| `clip_ratio` | 0.0001 | PPO-style clipping ratio |
+| `num_group_samples` | 64 | Structures per group |
+| `group_reward_norm` | true | Normalize rewards within group (required for GRPO) |
+| `num_inner_batch` | 2 | Number of inner batches for gradient accumulation |
+| `clip_ratio` | 0.001 | PPO-style clipping ratio |
 | `kl_weight` | 1.0 | KL divergence penalty weight |
+| `entropy_weight` | 1e-5 | Entropy regularization weight |
 
 ```bash
-# Example: larger groups for more stable training
+# Example: adjust group size
 python src/train_rl.py experiment=mp_20/rl_dng \
     rl_module.rl_configs.num_group_samples=128
 ```
@@ -101,6 +107,12 @@ rl_module:
       - _target_: src.rl_module.components.EnergyReward
         weight: 1.0
         normalize_fn: norm
+      - _target_: src.rl_module.components.StructureDiversityReward
+        weight: 0.1
+        normalize_fn: norm
+      - _target_: src.rl_module.components.CompositionDiversityReward
+        weight: 1.0
+        normalize_fn: norm
 ```
 
 See [Custom Rewards Guide](../rewards/index.md) for detailed component documentation ([`src/rl_module/components.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py)).
@@ -109,8 +121,9 @@ See [Custom Rewards Guide](../rewards/index.md) for detailed component documenta
 
 | Experiment | Dataset | Reward | Description |
 |------------|---------|--------|-------------|
-| `mp_20/rl_dng` | MP-20 | DNG (multi-objective) | Paper's de novo generation |
-| `alex_mp_20_bandgap/rl_bandgap` | Alex MP-20 | Predictor-based | Band gap optimization |
+| `rl_custom_reward` | MP-20 | Custom | Example: atomic density optimization (see [Custom Reward tutorial](../rewards/atomic-density.md)) |
+| `mp_20/rl_dng` | MP-20 | DNG (multi-objective) | Paper's de novo generation (see [DNG Reward tutorial](../rewards/dng-reward.md)) |
+| `alex_mp_20_bandgap/rl_bandgap` | Alex MP-20 | Predictor-based | Band gap optimization (see [Predictor Reward tutorial](../rewards/predictor-reward.md)) |
 
 ## Training Tips
 
@@ -134,8 +147,8 @@ Key metrics to watch in WandB:
 ### Typical Training
 
 - **Duration**: ~500-2000 steps
-- **Batch size**: 4-8 (limited by `num_group_samples`)
-- **GPU memory**: Scales with `num_group_samples`
+- **Batch size**: 5 (default for GRPO with 64 group samples)
+- **GPU memory**: Scales with `num_group_samples` (64 samples × 5 batch = 320 structures per step)
 
 ## Next Steps
 

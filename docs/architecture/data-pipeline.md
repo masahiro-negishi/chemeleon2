@@ -1,23 +1,28 @@
 # Data Pipeline
 
-The data module (`src/data/`) handles loading, processing, and batching of crystal structure data.
+The data module ([`src/data/`](https://github.com/hspark1212/chemeleon2/tree/main/src/data)) handles loading, processing, and batching of crystal structure data.
 
 ## Data Flow
 
 ```{mermaid}
 flowchart LR
-    A[CIF/JSON Files] --> B[Dataset]
-    B --> C[Featurizer]
-    C --> D[CrystalBatch]
-    D --> E[DataLoader]
-    E --> F[Model]
+    A[CIF/JSON Files]
+    B[Dataset]
+    C[Featurizer]
+    D[CrystalBatch]
+    E[DataLoader]
+    F[Model]
+
+    A --> B --> C --> D --> E --> F
+
+    style D fill:#e6f3ff
 ```
 
 ## Key Classes
 
 ### CrystalBatch
 
-The core data container for batched crystal structures:
+The core data container for batched crystal structures ([`src/data/schema.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/data/schema.py)):
 
 ```python
 from src.data.schema import CrystalBatch
@@ -33,7 +38,7 @@ from src.data.schema import CrystalBatch
 
 ### DataModule
 
-PyTorch Lightning DataModule for training:
+PyTorch Lightning DataModule for training ([`src/data/datamodule.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/data/datamodule.py)):
 
 ```python
 from src.data import DataModule
@@ -47,7 +52,7 @@ datamodule = DataModule(
 
 ### Featurizer
 
-Converts pymatgen structures to model-ready features:
+Converts pymatgen structures to model-ready features ([`src/utils/featurizer.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/utils/featurizer.py)):
 
 ```python
 from src.utils.featurizer import Featurizer
@@ -87,7 +92,7 @@ structures = loadfn("data/mp-20/train.json.gz")
 
 ## Configuration
 
-See `configs/data/` for data configurations:
+See [`configs/data/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/data) for data configurations:
 
 ```yaml
 # configs/data/mp_20.yaml
@@ -103,7 +108,7 @@ train_val_test_split: [0.8, 0.1, 0.1]
 
 ### Metrics
 
-Comprehensive evaluation metrics:
+Comprehensive evaluation metrics ([`src/utils/metrics.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/utils/metrics.py)):
 
 ```python
 from src.utils.metrics import Metrics

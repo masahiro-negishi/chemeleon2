@@ -1,31 +1,41 @@
 # LDM Module
 
-The Latent Diffusion Model module (`src/ldm_module/`) learns to generate crystal structures by denoising in the VAE's latent space.
+The Latent Diffusion Model module ([`src/ldm_module/`](https://github.com/hspark1212/chemeleon2/tree/main/src/ldm_module)) learns to generate crystal structures by denoising in the VAE's latent space.
 
 ## Architecture
 
 ```{mermaid}
-flowchart TB
+flowchart LR
     subgraph Training
-        A[Latent z from VAE] --> B[Add Noise at timestep t]
-        B --> C[DiT Denoiser]
-        C --> D[Predict Noise]
-        D --> E[Diffusion Loss]
+        direction TB
+        A[Latent z from VAE]
+        B[Add Noise at timestep t]
+        C[DiT Denoiser]
+        D[Predict Noise]
+        E[Diffusion Loss]
+        A --> B --> C --> D --> E
     end
 
     subgraph Sampling
-        F[Random Noise] --> G[Iterative Denoising]
-        G --> H[Clean Latent z]
-        H --> I[VAE Decoder]
-        I --> J[Crystal Structure]
+        direction TB
+        F[Random Noise]
+        G[Iterative Denoising]
+        H[Clean Latent z]
+        I[VAE Decoder]
+        J[Crystal Structure]
+        F --> G --> H --> I --> J
     end
+
+    Training ~~~ Sampling
+
+    style H fill:#ffffcc
 ```
 
 ## Key Classes
 
 ### LDMModule
 
-PyTorch Lightning module for the latent diffusion model:
+PyTorch Lightning module for the latent diffusion model ([`src/ldm_module/ldm_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/ldm_module/ldm_module.py)):
 
 ```python
 from src.ldm_module import LDMModule
@@ -88,7 +98,7 @@ python src/sample.py \
 
 ## Configuration
 
-See `configs/ldm_module/` for LDM configurations:
+See [`configs/ldm_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/ldm_module) for LDM configurations:
 
 ```yaml
 # configs/ldm_module/ldm_dng.yaml
@@ -112,4 +122,6 @@ python src/train_ldm.py experiment=mp_20/ldm_null
 python src/train_ldm.py experiment=mp_20/ldm_composition
 ```
 
-See [Training Guide](../user-guide/training.md) for more details.
+Training script: [`src/train_ldm.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/train_ldm.py)
+
+See [Training Guide](../user-guide/training/index.md) for more details.

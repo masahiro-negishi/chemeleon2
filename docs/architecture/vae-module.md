@@ -39,20 +39,25 @@ The main PyTorch Lightning module implementing the VAE ([`src/vae_module/vae_mod
 from src.vae_module import VAEModule
 
 # Load pre-trained VAE
-vae = VAEModule.load_from_checkpoint("path/to/checkpoint.ckpt")
+vae = VAEModule.load_from_checkpoint("path/to/checkpoint.ckpt", weights_only=False)
 
 # Encode crystal batch to latent distribution
-posterior = vae.encode(batch)
+encoded = vae.encode(batch)
+posterior = encoded["posterior"]
 z = posterior.sample()
 
 # Decode latent vectors to crystal properties
-decoder_out = vae.decode(z, batch)
+encoded["x"] = z
+decoder_out = vae.decode(encoded)
+
+# Reconstruct crystal structures
+batch_recon = vae.reconstruct(decoder_out, batch)
 ```
 
 **Key Methods:**
-- `encode(batch)` - Encodes crystal batch to latent distribution
-- `decode(encoded, batch)` - Decodes latent vectors to crystal properties
-- `sample(batch)` - Generates random samples from the latent space
+- `encode(batch)` - Encodes crystal batch to latent distribution (returns dict with "posterior")
+- `decode(encoded)` - Decodes latent dict to crystal properties (returns dict)
+- `sample(batch, return_atoms=False, return_structures=False)` - Generates random samples from the latent space
 - `reconstruct(decoder_out, batch)` - Reconstructs CrystalBatch from decoder output
 
 ### DiagonalGaussianDistribution
@@ -77,19 +82,19 @@ Where:
 See [`configs/vae_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/vae_module) for VAE configurations:
 
 ```yaml
-# configs/vae_module/vae_dng.yaml
-_target_: src.vae_module.VAEModule
+# configs/vae_module/vae_module.yaml (default)
+_target_: src.vae_module.vae_module.VAEModule
 encoder:
-  _target_: src.vae_module.encoders.TransformerEncoder
-  d_model: 256
+  _target_: src.vae_module.encoders.transformer.TransformerEncoder
+  d_model: 512
   nhead: 8
-  num_layers: 6
+  num_layers: 8
 decoder:
-  _target_: src.vae_module.decoders.TransformerDecoder
-  d_model: 256
+  _target_: src.vae_module.decoders.transformer.TransformerDecoder
+  d_model: 512
   nhead: 8
-  num_layers: 6
-latent_dim: 256
+  num_layers: 8
+latent_dim: 8
 ```
 
 ## Training

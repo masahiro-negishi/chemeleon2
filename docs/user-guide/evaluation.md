@@ -1,11 +1,11 @@
 # Evaluation Guide
 
-This guide covers evaluating generated crystal structures against reference datasets to assess quality and diversity.
+This guide covers evaluating generated crystal structures against reference datasets for [Available Metrics](evaluation-metrics).
 
 (prerequisites)=
 ## Prerequisites
 
-Before running evaluation metrics, you need to download and extract the reference dataset.
+Before running evaluation metrics, download and extract the reference dataset files containing structure embeddings, composition features, and phase diagram data.
 
 ### Download from Figshare
 
@@ -28,11 +28,11 @@ This will create the following directory structure:
 ```plaintext
 benchmarks/
 └── assets/
-    ├── mp_20_all_composition_features.pt
-    ├── mp_20_all_structure_features.pt
-    ├── mp_20_all_structure.json.gz
-    ├── mp_all_unique_structure_250416.json.gz
-    └── ppd-mp_all_entries_uncorrected_250409.pkl.gz
+    ├── mp_20_all_composition_features.pt              # VAE composition embeddings for diversity metrics
+    ├── mp_20_all_structure_features.pt                # VAE structure embeddings for diversity metrics
+    ├── mp_20_all_structure.json.gz                    # MP-20 reference structures for novelty checking
+    ├── mp_all_unique_structure_250416.json.gz         # All MP unique structures for novelty checking
+    └── ppd-mp_all_entries_uncorrected_250409.pkl.gz   # Phase diagram data for energy above hull
 ```
 
 These files contain the reference data required for computing evaluation metrics against the MP-20 dataset.
@@ -50,7 +50,7 @@ python src/sample.py --num_samples=10000 --batch_size=2000 --output_dir=outputs/
 (evaluate-models)=
 ## Evaluate Models
 
-Evaluate generated structures against reference datasets (i.e., MP-20, Alex-MP-20) to assess quality and diversity.
+Evaluate generated structures against reference datasets (i.e., MP-20) to assess quality and diversity.
 
 ### Generate and Evaluate Together
 
@@ -80,6 +80,8 @@ python src/evaluate.py \
 ## Evaluation Metrics
 
 The evaluation script computes several metrics to assess generation quality:
+:::{note}
+**Available Metrics**
 
 - **Unique**: Identifies structures that are not duplicates within the generated set
 - **Novel**: Identifies structures not found in the reference dataset
@@ -87,9 +89,9 @@ The evaluation script computes several metrics to assess generation quality:
 - **Composition Validity**: Checks if the composition is chemically valid using SMACT
 - **Structure Diversity**: Computes inverse Fréchet distance (1/(1+FMD)) between generated and reference structure embeddings from VAE (higher is better)
 - **Composition Diversity**: Computes inverse Fréchet distance (1/(1+FMD)) between generated and reference composition embeddings from VAE (higher is better)
-- **Synthesizability**: Predicts synthesizability using CL-score (optional)
+:::
 
-For detailed implementation, see `src/utils/metrics.py`.
+For detailed implementation, see [`src/utils/metrics.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/utils/metrics.py).
 
 ### Python API Usage
 
@@ -134,10 +136,10 @@ Results are saved to the specified output file in CSV format for further analysi
 (benchmarks)=
 ## Benchmarks for Chemeleon2 DNG
 
-Pre-computed benchmark results for de novo generation (DNG) are available in the `benchmarks/dng/` directory:
+Pre-computed benchmark results for de novo generation (DNG) are available in the [`benchmarks/dng/`](https://github.com/hspark1212/chemeleon2/tree/main/benchmarks/dng/) directory:
 
-- **MP-20**: `benchmarks/dng/chemeleon2_rl_dng_mp_20.json.gz` - 10,000 generated structures using RL-trained model on MP-20
-- **Alex-MP-20**: `benchmarks/dng/chemeleon2_rl_dng_alex_mp_20.json.gz` - 10,000 generated structures using RL-trained model on Alex-MP-20
+- **MP-20**: [`benchmarks/dng/chemeleon2_rl_dng_mp_20.json.gz`](https://github.com/hspark1212/chemeleon2/blob/main/benchmarks/dng/chemeleon2_rl_dng_mp_20.json.gz) - 10,000 generated structures using RL-trained model on MP-20
+- **Alex-MP-20**: [`benchmarks/dng/chemeleon2_rl_dng_alex_mp_20.json.gz`](https://github.com/hspark1212/chemeleon2/blob/main/benchmarks/dng/chemeleon2_rl_dng_alex_mp_20.json.gz) - 10,000 generated structures using RL-trained model on Alex-MP-20
 
 ### Loading Benchmark Data
 

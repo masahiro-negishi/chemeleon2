@@ -11,9 +11,9 @@ Crystal Structure → VAE Encoder → Latent z → Predictor → Property Value
 ```
 
 Key benefits (see [`src/vae_module/predictor_module.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/vae_module/predictor_module.py)):
-- **Fast inference**: Predicts from latent vectors, not raw structures
-- **Differentiable**: Enables gradient-based optimization
-- **Surrogate model**: Replaces expensive DFT/ML calculations
+- **Pre-trained VAE encoder**: Frozen weights from trained VAE checkpoint
+- **MLP predictor**: Trainable multi-layer projection network that maps latent vectors to property values
+- **Surrogate model**: Approximates expensive property calculations (e.g., DFT) for fast inference
 
 ## Prerequisites
 

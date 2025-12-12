@@ -41,15 +41,15 @@ PyTorch Lightning module for the latent diffusion model ([`src/ldm_module/ldm_mo
 from src.ldm_module import LDMModule
 
 # Load pre-trained LDM
-ldm = LDMModule.load_from_checkpoint("path/to/checkpoint.ckpt")
+ldm = LDMModule.load_from_checkpoint("path/to/checkpoint.ckpt", weights_only=False)
 
 # Sample new structures
-batch_gen = ldm.sample(batch, num_samples=100)
+batch_gen = ldm.sample(batch, sampling_steps=50)
 ```
 
 **Key Methods:**
-- `calculate_loss(batch)` - Computes diffusion training loss
-- `sample(batch)` - Generates structures via DDPM or DDIM sampling
+- `calculate_loss(batch, training=True)` - Computes diffusion training loss
+- `sample(batch, sampler="ddim", sampling_steps=50, cfg_scale=2.0, ...)` - Generates structures via DDPM or DDIM sampling
 
 ### DiT (Diffusion Transformer)
 
@@ -101,15 +101,16 @@ python src/sample.py \
 See [`configs/ldm_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/ldm_module) for LDM configurations:
 
 ```yaml
-# configs/ldm_module/ldm_dng.yaml
-_target_: src.ldm_module.LDMModule
+# configs/ldm_module/ldm_module.yaml (default)
+_target_: src.ldm_module.ldm_module.LDMModule
 denoiser:
-  _target_: src.ldm_module.denoisers.DiT
-  hidden_size: 512
+  _target_: src.ldm_module.denoisers.dit.DiT
+  hidden_size: 768
   depth: 12
-diffusion:
-  timesteps: 1000
-  beta_schedule: "cosine"
+  num_heads: 12
+diffusion_configs:
+  diffusion_steps: 1000
+  learn_sigma: true
 ```
 
 ## Training

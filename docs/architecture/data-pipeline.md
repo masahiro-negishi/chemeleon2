@@ -44,7 +44,7 @@ PyTorch Lightning DataModule for training ([`src/data/datamodule.py`](https://gi
 from src.data import DataModule
 
 datamodule = DataModule(
-    data_path="data/mp-20",
+    data_dir="data/mp-20",
     batch_size=32,
     num_workers=4,
 )
@@ -55,39 +55,15 @@ datamodule = DataModule(
 Converts pymatgen structures to model-ready features ([`src/utils/featurizer.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/utils/featurizer.py)):
 
 ```python
-from src.utils.featurizer import Featurizer
+from src.utils.featurizer import featurize
 
-featurizer = Featurizer(
-    max_atoms=20,
-    atom_types=["H", "C", "N", "O", ...],
+# Featurize structures
+features = featurize(
+    structures=[structure],
+    model_path=None,  # Uses default pre-trained VAE
+    batch_size=2000,
 )
-
-features = featurizer(structure)
-```
-
-## Supported Datasets
-
-| Dataset | Description | Path |
-|---------|-------------|------|
-| MP-20 | Materials Project (≤20 atoms) | `data/mp-20/` |
-| MP-120 | Materials Project (≤120 atoms) | `data/mp-120/` |
-| Alex-MP-20 | Alexandria dataset (≤20 atoms) | `data/alex-mp-20/` |
-| Amorphous | Amorphous materials | `data/mp_amorphous/` |
-
-## Data Format
-
-Crystal structures are stored as compressed JSON:
-
-```python
-from monty.serialization import loadfn
-
-# Load dataset
-structures = loadfn("data/mp-20/train.json.gz")
-
-# Each entry contains:
-# - structure: pymatgen Structure
-# - material_id: MP identifier
-# - formation_energy: Formation energy (optional)
+# Returns dict with "structure_features", "composition_features", "atom_features"
 ```
 
 ## Configuration
@@ -95,48 +71,19 @@ structures = loadfn("data/mp-20/train.json.gz")
 See [`configs/data/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/data) for data configurations:
 
 ```yaml
-# configs/data/mp_20.yaml
-_target_: src.data.DataModule
-data_path: data/mp-20
-batch_size: 32
-num_workers: 4
-max_atoms: 20
-train_val_test_split: [0.8, 0.1, 0.1]
+# configs/data/mp-20.yaml (default)
+_target_: src.data.datamodule.DataModule
+data_dir: ${paths.data_dir}/mp-20
+batch_size: 256
+dataset_type: "mp_20"
+num_workers: 16
 ```
 
-## Utilities
-
-### Metrics
-
-Comprehensive evaluation metrics ([`src/utils/metrics.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/utils/metrics.py)):
-
-```python
-from src.utils.metrics import Metrics
-
-metrics = Metrics(reference_structures=train_data)
-results = metrics.compute(generated_structures)
-```
-
-Available metrics:
-- `unique` - Uniqueness rate
-- `novel` - Novelty rate
-- `e_above_hull` - Energy above hull
-- `composition_validity` - Valid compositions
-- `structure_diversity` - Structural diversity
-- `composition_diversity` - Compositional diversity
-
-### Visualization
-
-3D structure visualization:
-
-```python
-from src.utils.visualize import visualize_structure
-
-view = visualize_structure(structure)
-view.show()
-```
+:::{tip}
+**Custom Datasets:** For creating custom datasets with property labels (e.g., band gap, formation energy), see the [Predictor-Based Reward Tutorial](../user-guide/rewards/predictor-reward.md#step-1-prepare-your-dataset).
+:::
 
 ## Learn More
 
-- [Evaluation Guide](../user-guide/evaluation.md) - Detailed metrics explanation
+- [Predictor-Based Reward Tutorial](../user-guide/rewards/predictor-reward.md) - Guide on using predictors for RL rewards
 - [API Reference](../api/index.md) - Full API documentation

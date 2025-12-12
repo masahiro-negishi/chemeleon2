@@ -26,6 +26,8 @@ flowchart LR
         M --> N[GRPO Update]
         N --> K
     end
+
+    Stage1 --> Stage2 --> Stage3
 ```
 
 ## Module Responsibilities

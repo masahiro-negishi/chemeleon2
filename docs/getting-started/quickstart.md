@@ -15,11 +15,11 @@ Chemeleon2 provides pre-trained checkpoints via [HuggingFace Hub](https://huggin
 | `mp_20_ldm_rl`| MP-20 | Fine-tuned LDM with RL for DNG rewards on MP-20 dataset |
 | `alex_mp_20_ldm_rl` | Alex-MP-20 | Fine-tuned LDM with RL for DNG rewards on Alexandria MP-20 dataset |
 
-```{tip}
+:::{tip}
 **Automatic Checkpoint Loading**
 
 You don't need to manually download checkpoints! Use the `${hub:...}` resolver in config files or command-line arguments to automatically download from HuggingFace Hub. Available hub identifiers match the model names in the table above. See [Training Guide](../user-guide/training/index.md#checkpoint-management) for more details.
-```
+:::
 
 ## Sample Crystal Structures
 

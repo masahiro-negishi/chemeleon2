@@ -23,10 +23,10 @@ PyTorch Lightning module for RL fine-tuning ([`src/rl_module/rl_module.py`](http
 ```python
 from src.rl_module import RLModule
 
-# Load RL module with pre-trained LDM
-rl_module = RLModule(
-    ldm_module=ldm,
-    reward=reward_config,
+# Load RL module from checkpoint
+rl_module = RLModule.load_from_checkpoint(
+    "path/to/rl.ckpt",
+    weights_only=False,
 )
 ```
 
@@ -43,9 +43,10 @@ Abstract base for all reward components ([`src/rl_module/components.py`](https:/
 from src.rl_module.components import RewardComponent
 
 class MyCustomReward(RewardComponent):
-    def compute(self, batch_gen, **kwargs):
+    def compute(self, gen_structures, **kwargs):
         # Return tensor of rewards for each structure
-        return rewards
+        # gen_structures: list[Structure]
+        return rewards  # torch.Tensor
 ```
 
 ### Built-in Reward Components
@@ -65,13 +66,14 @@ Aggregates multiple reward components ([`src/rl_module/reward.py`](https://githu
 
 ```python
 from src.rl_module.reward import ReinforceReward
+from src.rl_module.components import CreativityReward, EnergyReward
 
 reward = ReinforceReward(
     components=[
-        {"name": "creativity", "weight": 1.0},
-        {"name": "energy", "weight": 0.5},
+        CreativityReward(weight=1.0),
+        EnergyReward(weight=0.5),
     ],
-    normalization="std",
+    normalize_fn="std",
 )
 ```
 
@@ -89,18 +91,24 @@ reward = ReinforceReward(
 See [`configs/rl_module/`](https://github.com/hspark1212/chemeleon2/tree/main/configs/rl_module) for RL configurations:
 
 ```yaml
-# configs/rl_module/rl_dng.yaml
-_target_: src.rl_module.RLModule
-reward:
+# configs/rl_module/rl_module.yaml (default)
+_target_: src.rl_module.rl_module.RLModule
+reward_fn:
+  _target_: src.rl_module.reward.ReinforceReward
+  normalize_fn: std
   components:
-    - name: creativity
+    - _target_: src.rl_module.components.CreativityReward
       weight: 1.0
-    - name: energy
-      weight: 0.5
-  normalization: std
-grpo:
-  epsilon: 0.2
-  kl_coef: 0.01
+    - _target_: src.rl_module.components.EnergyReward
+      weight: 1.0
+    - _target_: src.rl_module.components.StructureDiversityReward
+      weight: 0.1
+    - _target_: src.rl_module.components.CompositionDiversityReward
+      weight: 1.0
+rl_configs:
+  clip_ratio: 0.001
+  kl_weight: 1.0
+  num_group_samples: 1
 ```
 
 ## Training

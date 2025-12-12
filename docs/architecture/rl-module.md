@@ -6,13 +6,15 @@ The Reinforcement Learning module ([`src/rl_module/`](https://github.com/hspark1
 
 GRPO optimizes the LDM policy to maximize expected rewards:
 
-$$\mathcal{L}_{GRPO} = -\mathbb{E}[\min(r_t(\theta)A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)A_t)] + \beta D_{KL}$$
+$$\mathcal{L}_{GRPO} = -\mathbb{E}[\min(r_t(\theta)A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)A_t)] + \beta D_{KL} - \gamma H$$
 
 Where:
 - $r_t(\theta)$: Probability ratio between current and old policy
 - $A_t$: Advantage (normalized group rewards)
 - $\epsilon$: Clipping parameter
 - $\beta$: KL penalty weight
+- $\gamma$: Entropy weight
+- $H$: Entropy (encourages high policy entropy)
 
 ## Key Classes
 
@@ -51,14 +53,14 @@ class MyCustomReward(RewardComponent):
 
 ### Built-in Reward Components
 
-| Component | Description | Key Parameter |
-|-----------|-------------|---------------|
-| `CustomReward` | User-defined rewards | `reward_fn` |
-| `PredictorReward` | Surrogate model predictions | `predictor_ckpt` |
-| `CreativityReward` | Unique + Novel structures | Uses metrics |
-| `EnergyReward` | Low energy above hull | Uses MACE |
-| `StructureDiversityReward` | MMD-based diversity | `sigma` |
-| `CompositionDiversityReward` | Composition diversity | `sigma` |
+| Component | Description |
+|-----------|-------------|
+| `CustomReward` | User-defined rewards |
+| `PredictorReward` | Surrogate model predictions |
+| `CreativityReward` | Unique + Novel structures |
+| `EnergyReward` | Low energy above hull |
+| `StructureDiversityReward` | MMD-based diversity |
+| `CompositionDiversityReward` | Composition diversity |
 
 ### ReinforceReward
 
@@ -123,4 +125,4 @@ python src/train_rl.py experiment=alex_mp_20_bandgap/rl_bandgap
 
 Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/train_rl.py)
 
-See [Training Guide](../user-guide/training/index.md) and [Custom Rewards](../user-guide/custom-rewards.md) for more details.
+See [Training Guide](../user-guide/training/index.md) and [Custom Rewards](../user-guide/rewards/index.md) for more details.

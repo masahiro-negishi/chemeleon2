@@ -1,6 +1,6 @@
 # Evaluation Guide
 
-This guide covers evaluating generated crystal structures against reference datasets for [Available Metrics](evaluation-metrics).
+This guide covers evaluating generated crystal structures against reference datasets for [Available Metrics](#evaluation-metrics).
 
 (prerequisites)=
 ## Prerequisites

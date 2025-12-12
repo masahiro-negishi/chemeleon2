@@ -76,37 +76,48 @@ test_df.to_csv("data/my_bandgap/test.csv", index=False)
 
 ### Create Predictor Configuration
 
-Create `configs/experiment/my_bandgap/predictor.yaml`:
+Use the existing Alex-MP-20-Bandgap config or create your own:
 
 ```yaml
+# Reference: configs/experiment/alex_mp_20_bandgap/predictor_dft_band_gap.yaml
 # @package _global_
 # Predictor training for band gap
 
 data:
   _target_: src.data.datamodule.DataModule
-  data_dir: ${paths.data_dir}/my_bandgap
+  data_dir: ${paths.data_dir}/alex_mp_20_bandgap
   batch_size: 256
-  dataset_type: "my_bandgap"
-  target_condition: band_gap
-  num_workers: 16
+  dataset_type: "alex_mp_20_bandgap"
+  target_condition: dft_band_gap
 
 predictor_module:
   vae:
-    checkpoint_path: ${hub:mp_20_vae}
+    checkpoint_path: ${hub:alex_mp_20_vae}
 
   target_conditions:
-    band_gap:
-      mean: 1.5   # From Step 1 statistics
-      std: 1.2    # From Step 1 statistics
+    dft_band_gap:
+      mean: 0.797   # Dataset statistics
+      std: 1.408
 
 logger:
   wandb:
-    name: "predictor_bandgap"
+    name: "predictor_dft_band_gap"
+```
+
+```{tip}
+The `target_condition` name (e.g., `dft_band_gap`) must match exactly with:
+- The column name in your CSV data files
+- The key in `target_conditions`
+- The `target_name` in PredictorReward config
 ```
 
 ### Run Predictor Training
 
 ```bash
+# Using the Alex-MP-20-Bandgap dataset
+python src/train_predictor.py experiment=alex_mp_20_bandgap/predictor
+
+# Or for custom dataset
 python src/train_predictor.py experiment=my_bandgap/predictor
 ```
 
@@ -148,26 +159,27 @@ class PredictorReward(RewardComponent):
 
 ### Create RL Configuration
 
-Create `configs/experiment/my_bandgap/rl.yaml`:
+Use the existing Alex-MP-20-Bandgap config or create your own:
 
 ```yaml
+# Reference: configs/experiment/alex_mp_20_bandgap/rl_bandgap.yaml
 # @package _global_
-# RL training for band gap optimization
+# RL training for bandgap optimization
 
 data:
   _target_: src.data.datamodule.DataModule
-  data_dir: ${paths.data_dir}/my_bandgap
+  data_dir: ${paths.data_dir}/alex_mp_20_bandgap
   batch_size: 5
-  dataset_type: "my_bandgap"
-  target_condition: band_gap
+  dataset_type: "alex_mp_20_bandgap"
+  target_condition: dft_band_gap
   num_workers: 16
 
 trainer:
   max_steps: 1000
 
 rl_module:
-  ldm_ckpt_path: ${hub:mp_20_ldm_base}
-  vae_ckpt_path: ${hub:mp_20_vae}
+  ldm_ckpt_path: ${hub:alex_mp_20_ldm_rl}
+  vae_ckpt_path: ${hub:alex_mp_20_vae}
 
   rl_configs:
     clip_ratio: 0.0001
@@ -179,28 +191,42 @@ rl_module:
     _target_: src.rl_module.reward.ReinforceReward
     normalize_fn: std
     eps: 1e-4
-    reference_dataset: mp-20
+    reference_dataset: alex-mp-20
     components:
       - _target_: src.rl_module.components.PredictorReward
         weight: 1.0
         normalize_fn: norm
         predictor:
           _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
-          checkpoint_path: "ckpts/my_bandgap/predictor.ckpt"
+          checkpoint_path: "ckpts/alex_mp_20_bandgap/predictor/predictor_dft_band_gap.ckpt"
           map_location: "cpu"
-        target_name: band_gap
+        target_name: dft_band_gap
         target_value: 3.0    # Target: wide band gap (3.0 eV)
         clip_min: 0.0        # Band gap cannot be negative
+      - _target_: src.rl_module.components.CompositionDiversityReward
+        weight: 0.5
+        normalize_fn: norm
 
 logger:
   wandb:
     name: rl_bandgap
 ```
 
+```{tip}
+**Key Points:**
+- `target_name` must match the key in predictor's `target_conditions` (`dft_band_gap`)
+- `reference_dataset` should match your data source (`alex-mp-20` for Alex dataset)
+- Predictor returns **denormalized** values automatically - no need to manually scale
+- Add `CompositionDiversityReward` to encourage diverse chemical exploration
+```
+
 ## Step 4: Run RL Training
 
 ```bash
-# Run RL with predictor reward (src/train_rl.py)
+# Using Alex-MP-20-Bandgap dataset
+python src/train_rl.py experiment=alex_mp_20_bandgap/rl_bandgap
+
+# Or for custom dataset
 python src/train_rl.py experiment=my_bandgap/rl
 ```
 
@@ -213,7 +239,7 @@ Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/bl
 **Maximize band gap** (no upper bound):
 ```yaml
 - _target_: src.rl_module.components.PredictorReward
-  target_name: band_gap
+  target_name: dft_band_gap
   target_value: null  # No target = maximize
   clip_min: 0.0
 ```
@@ -221,7 +247,7 @@ Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/bl
 **Target specific value** (e.g., 2.5 eV):
 ```yaml
 - _target_: src.rl_module.components.PredictorReward
-  target_name: band_gap
+  target_name: dft_band_gap
   target_value: 2.5  # Penalize deviation from 2.5 eV
 ```
 
@@ -236,9 +262,9 @@ components:
     normalize_fn: norm
     predictor:
       _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
-      checkpoint_path: "ckpts/predictor.ckpt"
+      checkpoint_path: "ckpts/alex_mp_20_bandgap/predictor/predictor_dft_band_gap.ckpt"
       map_location: "cpu"
-    target_name: band_gap
+    target_name: dft_band_gap
     target_value: 3.0
     clip_min: 0.0
 
@@ -275,16 +301,16 @@ components:
     weight: 1.0
     predictor:
       _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
-      checkpoint_path: "ckpts/predictor.ckpt"
+      checkpoint_path: "ckpts/multi_property_predictor.ckpt"
       map_location: "cpu"
-    target_name: band_gap
+    target_name: dft_band_gap
     target_value: 3.0
 
   - _target_: src.rl_module.components.PredictorReward
     weight: 0.5
     predictor:
       _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
-      checkpoint_path: "ckpts/predictor.ckpt"
+      checkpoint_path: "ckpts/multi_property_predictor.ckpt"
       map_location: "cpu"
     target_name: formation_energy
     target_value: null  # Minimize (more negative = more stable)

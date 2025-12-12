@@ -8,6 +8,9 @@ data:
   data_dir: ${paths.data_dir}/mp-20
   batch_size: 5
 
+trainer:
+  max_steps: 5000
+
 rl_module:
   ldm_ckpt_path: ${hub:mp_20_ldm_base}
   vae_ckpt_path: ${hub:mp_20_vae}
@@ -17,14 +20,9 @@ rl_module:
     group_reward_norm: true
 
   reward_fn:
-    _target_: src.rl_module.reward.ReinforceReward
     normalize_fn: std
-    eps: 1e-4
-    reference_dataset: mp-20
     components:
-      - _target_: src.rl_module.components.CustomReward
-        weight: 1.0
-        normalize_fn: norm  # Scale to [0, 1] within batch
+      - _target_: custom_reward.custom_reward.CustomReward
 
 logger:
   wandb:

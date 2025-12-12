@@ -6,9 +6,9 @@ Learn to create a custom reward that maximizes atomic density in generated cryst
 
 Create a reward function that encourages denser crystal structures:
 
-$$\text{density} = \frac{N_{\text{atoms}}}{V_{\text{cell}}}$$
+$$\text{density} = \frac{M_{\text{total}}}{V_{\text{cell}}} \quad [\text{g/cm}^3]$$
 
-Higher density = more atoms packed per unit volume.
+Higher density = more mass packed per unit volume.
 
 ## Prerequisites
 
@@ -48,23 +48,25 @@ class CustomReward(RewardComponent):
         """
         rewards = []
         for structure in gen_structures:
-            num_atoms = len(structure)
-            volume = structure.lattice.volume  # in Å³
-            density = num_atoms / volume  # atoms per Å³
+            density = structure.density  # atomic mass / volume [g/cm³]
             rewards.append(density)
-        return torch.tensor(rewards, dtype=torch.float32)
+        return torch.as_tensor(rewards)
 ```
 
 ## Step 3: Create Configuration File
 
-Create `configs/experiment/my_atomic_density.yaml`:
+See [`configs/custom_reward/atomic_density.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/custom_reward/atomic_density.yaml):
 
 ```yaml
 # @package _global_
-# Atomic Density RL Experiment
+# RL Custom Reward Experiment Configuration
 
 data:
+  data_dir: ${paths.data_dir}/mp-20
   batch_size: 5
+
+trainer:
+  max_steps: 200
 
 rl_module:
   ldm_ckpt_path: ${hub:mp_20_ldm_base}
@@ -75,46 +77,87 @@ rl_module:
     group_reward_norm: true
 
   reward_fn:
-    _target_: src.rl_module.reward.ReinforceReward
     normalize_fn: std
-    eps: 1e-4
-    reference_dataset: mp-20
     components:
-      - _target_: src.rl_module.components.CustomReward
-        weight: 1.0
-        normalize_fn: norm  # Scale to [0, 1] within batch
+      - _target_: custom_reward.atomic_density.AtomicDensityReward
 
 logger:
   wandb:
-    name: rl_atomic_density
+    name: rl_custom_reward
 ```
 
 ## Step 4: Run Training
 
 ```bash
-# Run with custom config (src/train_rl.py)
-python src/train_rl.py experiment=my_atomic_density
+python src/train_rl.py custom_reward=atomic_density
 ```
 
 Training script: [`src/train_rl.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/train_rl.py)
 
 ## Step 5: Monitor Training
 
+:::{tip}
+**Example training run**: See [this W&B run](https://wandb.ai/hspark1212/chemeleon2_project/runs/71u0nz7w) for atomic density reward training examples.
+:::
+
 In WandB, watch these metrics:
-- `train/reward`: Overall reward (should increase)
-- `val/reward`: Validation reward
+
+| Metric | Description |
+|--------|-------------|
+| `train/reward` | Mean reward from reward function (should increase) |
+| `val/reward` | Validation reward |
+| `train/advantages` | Normalized rewards used for policy gradient |
+| `train/kl_div` | KL divergence from reference policy |
+| `train/entropy` | Policy entropy |
+| `train/loss` | Total policy loss |
 
 As training progresses, the model should generate increasingly dense structures.
+
+## Step 6: Evaluate Results
+
+### Generate Samples
+
+```bash
+python src/sample.py \
+    --ldm_ckpt_path=logs/train_rl/runs/<your-run>/checkpoints/last.ckpt \
+    --num_samples=10 \
+    --output_dir=outputs/rl_samples
+```
+
+### Analyze Density
+
+```python
+from monty.serialization import loadfn
+import numpy as np
+
+structures = loadfn("outputs/rl_samples/generated_structures.json.gz")
+densities = [s.density for s in structures]
+
+print(f"Mean density: {np.mean(densities):.3f} g/cm³")
+print(f"Max density:  {np.max(densities):.3f} g/cm³")
+```
+
+:::{tip}
+If Mean density is higher than 7 g/cm³, your first RL learning with your custom reward is successful!
+:::
 
 ## Extensions
 
 ### Target Density
 
-Instead of maximizing density, optimize toward a specific target:
+Instead of maximizing density, optimize toward a specific target. Create `custom_reward/target_density.py`:
 
 ```python
-class CustomReward(RewardComponent):
-    """Target density reward - optimize toward specific density."""
+"""Target density reward for RL training."""
+
+import torch
+from pymatgen.core import Structure
+
+from src.rl_module.components import RewardComponent
+
+
+class TargetDensityReward(RewardComponent):
+    """Reward based on distance from target density."""
 
     def __init__(self, target_density: float = 0.05, **kwargs):
         super().__init__(**kwargs)
@@ -130,68 +173,44 @@ class CustomReward(RewardComponent):
         return torch.tensor(rewards, dtype=torch.float32)
 ```
 
-Config:
+Create a config file (`configs/custom_reward/rl_target_density.yaml`):
 ```yaml
-components:
-  - _target_: src.rl_module.components.CustomReward
-    weight: 1.0
-    target_density: 0.05  # atoms/Å³
-    normalize_fn: std
+# @package _global_
+rl_module:
+  reward_fn:
+    components:
+      - _target_: custom_reward.target_density.TargetDensityReward
+        target_density: 5.0  # atoms/Å³
 ```
 
-### Combined with Stability
+### Combined with built-in Reward Components
 
-Ensure dense structures are also stable by adding `EnergyReward`:
+Ensure dense structures are also stable by adding `EnergyReward` and `StructureDiversityReward`:
 
 ```yaml
-components:
-  - _target_: src.rl_module.components.CustomReward
-    weight: 1.0
-    normalize_fn: norm
-  - _target_: src.rl_module.components.EnergyReward
-    weight: 0.5
-    normalize_fn: norm
+# @package _global_
+rl_module:
+  reward_fn:
+    components:
+      - _target_: custom_reward.atomic_density.AtomicDensityReward
+        weight: 1.0
+        normalize_fn: norm
+      - _target_: src.rl_module.components.EnergyReward
+        weight: 0.5
+        normalize_fn: norm
+      - _target_: src.rl_module.components.StructureDiversityReward
+        weight: 0.5
+        normalize_fn: norm
 ```
 
-This balances density optimization with thermodynamic stability.
+This encourages the model to generate structures that are dense, low-energy, and diverse.
 
-### Other Properties
-
-The same pattern works for any structure property:
-
-```python
-# Example: Maximize number of unique elements
-def compute(self, gen_structures: list[Structure], **kwargs) -> torch.Tensor:
-    rewards = []
-    for structure in gen_structures:
-        num_elements = len(set(structure.species))
-        rewards.append(float(num_elements))
-    return torch.tensor(rewards, dtype=torch.float32)
-```
-
-```python
-# Example: Target specific space group
-def compute(self, gen_structures: list[Structure], **kwargs) -> torch.Tensor:
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
-    target_spacegroup = 225  # Fm-3m (FCC)
-    rewards = []
-    for structure in gen_structures:
-        try:
-            sga = SpacegroupAnalyzer(structure)
-            sg_number = sga.get_space_group_number()
-            reward = 1.0 if sg_number == target_spacegroup else 0.0
-        except Exception:
-            reward = 0.0
-        rewards.append(reward)
-    return torch.tensor(rewards, dtype=torch.float32)
-```
 
 ## Summary
 
-1. Modify `CustomReward.compute()` in [`src/rl_module/components.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py)
-2. Create experiment config with your reward component
-3. Run training and monitor rewards
+1. Create your reward class in `custom_reward/` folder
+2. Create config in `configs/custom_reward/` referencing your reward
+3. Run training: `python src/train_rl.py custom_reward=your_config`
 4. Combine with other components for multi-objective optimization
 
 ## Next Steps

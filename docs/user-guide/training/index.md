@@ -4,8 +4,12 @@ This guide covers how to train Chemeleon2 models. The framework implements a thr
 
 ## Training Pipeline
 
-```
-VAE → LDM → RL
+```{mermaid}
+flowchart LR
+    subgraph Pipeline["Three-Stage Training"]
+        A[VAE Training] --> B[LDM Training]
+        B --> C[RL Fine-tuning]
+    end
 ```
 
 | Stage | Purpose |

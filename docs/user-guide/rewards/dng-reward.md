@@ -6,22 +6,26 @@ Learn to configure the multi-objective reward used in the Chemeleon2 paper for g
 
 The DNG reward combines four complementary objectives:
 
-| Component | Purpose | Weight |
-|-----------|---------|--------|
-| **CreativityReward** | Generate unique and novel structures | 1.0 |
-| **EnergyReward** | Ensure thermodynamic stability | 1.0 |
-| **StructureDiversityReward** | Explore varied crystal geometries | 0.1 |
-| **CompositionDiversityReward** | Cover chemical composition space | 1.0 |
+| Component | Purpose |
+|-----------|---------|
+| **CreativityReward** | Generate unique and novel structures |
+| **EnergyReward** | Ensure thermodynamic stability |
+| **StructureDiversityReward** | Explore varied structure prototypes |
+| **CompositionDiversityReward** | Explore chemical composition space |
 
 ## Prerequisites
 
-- Pre-trained LDM checkpoint
-- Pre-trained VAE checkpoint
-- MP-20 reference dataset (for novelty metrics, see [Evaluation Guide](../evaluation.md#prerequisites))
+- **MP-20 reference dataset** - Required for evaluation metrics (novelty, diversity, etc.)
+
+:::{important}
+**Required**: Download the MP-20 reference dataset from Figshare to compute evaluation metrics. Without this, the DNG reward components (CreativityReward, StructureDiversityReward, CompositionDiversityReward) will not work properly.
+
+See [Evaluation Guide - Prerequisites](../evaluation.md#prerequisites) for download instructions.
+:::
 
 ## The DNG Configuration
 
-Reference file: [`configs/experiment/mp_20/rl_dng.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/experiment/mp_20/rl_dng.yaml)
+Reference file: [`configs/custom_reward/rl_dng.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/custom_reward/rl_dng.yaml)
 
 ```yaml
 # @package _global_
@@ -62,13 +66,21 @@ logger:
     name: rl_dng_grpo
 ```
 
+:::{tip}
+**Adjustable Weights**: You can customize the importance of each reward component by modifying the `weight` parameter. See [Weight Tuning Guide](#weight-tuning-guide) below for recommendations based on your optimization goals.
+:::
+
+:::{note}
+The `${hub:...}` syntax automatically downloads pre-trained models from HuggingFace. See [Automatic Download from HuggingFace](../training/index.md#automatic-download-from-huggingface) for details.
+:::
+
 ## Component Deep Dive
 
-All components are defined in [`src/rl_module/components.py`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py).
+The DNG reward uses **built-in reward components** provided by Chemeleon2. For a complete list of available components, see [RL Module - Built-in Reward Components](../../architecture/rl-module.md#built-in-reward-components). These components are ready to use without additional implementation.
 
-### CreativityReward
+### [CreativityReward](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py#L92)
 
-**Purpose:** Reward structures that are both unique (not duplicated in batch) and novel (not in training set) ([`src/rl_module/components.py:CreativityReward`](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py)).
+**Purpose:** Reward structures that are both unique (not duplicated in batch) and novel (not in training set).
 
 **How it works:**
 
@@ -90,7 +102,7 @@ for i, gen_structure in enumerate(gen_structures):
 - `weight: 1.0` - Equal importance with other objectives
 - `normalize_fn: null` - Already in [0, 1] range
 
-### EnergyReward
+### [EnergyReward](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py#L134)
 
 **Purpose:** Penalize structures with high energy above the convex hull.
 
@@ -110,7 +122,7 @@ r_energy = r_energy * -1.0  # Negative for minimization
 - `weight: 1.0` - Strong emphasis on stability
 - `normalize_fn: norm` - Scale within batch
 
-### StructureDiversityReward
+### [StructureDiversityReward](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py#L154)
 
 **Purpose:** Encourage diverse crystal geometries using Maximum Mean Discrepancy (MMD).
 
@@ -128,7 +140,7 @@ Too much structure diversity can lead to:
 - Physically unrealistic geometries
 - Sacrificing stability for novelty
 
-### CompositionDiversityReward
+### [CompositionDiversityReward](https://github.com/hspark1212/chemeleon2/blob/main/src/rl_module/components.py#L185)
 
 **Purpose:** Encourage exploration of chemical composition space.
 
@@ -145,29 +157,34 @@ Too much structure diversity can lead to:
 
 ```bash
 # Standard DNG training (src/train_rl.py)
-python src/train_rl.py experiment=mp_20/rl_dng
+python src/train_rl.py custom_reward=rl_dng
 
 # With custom hyperparameters
-python src/train_rl.py experiment=mp_20/rl_dng \
+python src/train_rl.py custom_reward=rl_dng \
     rl_module.rl_configs.num_group_samples=128 \
     trainer.max_steps=2000
 
 # Override checkpoint paths
-python src/train_rl.py experiment=mp_20/rl_dng \
+python src/train_rl.py custom_reward=rl_dng \
     rl_module.ldm_ckpt_path=ckpts/my_ldm.ckpt
 ```
 
 ## Monitoring Training
 
-Key WandB metrics:
+:::{tip}
+**Example training run**: See [this W&B run](https://wandb.ai/hspark1212/chemeleon2_project/runs/qlui3icn) for DNG reward training examples.
+:::
 
-| Metric | Expected Behavior |
-|--------|-------------------|
-| `train/reward` | Increase over time |
-| `train/creativity` | Increase (more novel structures) |
-| `train/energy` | Increase (lower energy = higher reward) |
-| `train/structure_diversity` | Stable or slight increase |
-| `train/composition_diversity` | Increase (broader chemical space) |
+In WandB, watch these metrics:
+
+| Metric | Description |
+|--------|-------------|
+| `train/reward` | Mean reward from reward function (should increase) |
+| `val/reward` | Validation reward |
+| `train/advantages` | Normalized rewards used for policy gradient |
+| `train/kl_div` | KL divergence from reference policy |
+| `train/entropy` | Policy entropy |
+| `train/loss` | Total policy loss |
 
 ## Weight Tuning Guide
 
@@ -194,59 +211,6 @@ components:
   - _target_: src.rl_module.components.CompositionDiversityReward
     weight: 0.5
     normalize_fn: norm
-```
-
-## Customization Examples
-
-### Add Property Constraint
-
-Combine DNG with band gap optimization:
-
-```yaml
-components:
-  - _target_: src.rl_module.components.CreativityReward
-    weight: 0.5
-  - _target_: src.rl_module.components.EnergyReward
-    weight: 0.5
-    normalize_fn: norm
-  - _target_: src.rl_module.components.PredictorReward
-    weight: 1.0
-    normalize_fn: norm
-    predictor:
-      _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
-      checkpoint_path: "ckpts/predictor.ckpt"
-      map_location: "cpu"
-    target_name: band_gap
-    target_value: 2.0
-  - _target_: src.rl_module.components.CompositionDiversityReward
-    weight: 0.5
-    normalize_fn: norm
-```
-
-### Focus on Specific Elements
-
-Use a custom reference dataset for specific chemistry:
-
-```yaml
-reward_fn:
-  _target_: src.rl_module.reward.ReinforceReward
-  reference_dataset: my_custom_dataset  # Your filtered dataset
-  components:
-    # ... components
-```
-
-### Remove Diversity Constraints
-
-For focused optimization without diversity:
-
-```yaml
-components:
-  - _target_: src.rl_module.components.CreativityReward
-    weight: 1.0
-  - _target_: src.rl_module.components.EnergyReward
-    weight: 1.0
-    normalize_fn: norm
-  # No diversity rewards
 ```
 
 ## Summary

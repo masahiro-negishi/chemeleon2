@@ -2,13 +2,21 @@
 
 This guide explains how to configure and customize reward functions for RL training in Chemeleon2.
 
-## What Are Rewards?
+## Why Verifiable Rewards?
 
-Reward functions define what properties to optimize during RL fine-tuning. The LDM learns to generate structures that maximize the total reward.
+Generative models for crystal structure generation face a fundamental **objective misalignment**: likelihood-based sampling inherently favors high-density regions of known compounds, while scientific discovery requires targeted exploration of underexplored regions where novel materials reside.
 
+Reward functions enable the model to optimize for **verifiable scientific objectives** beyond likelihood maximization:
+
+```{mermaid}
+flowchart LR
+    A[Generated Structure] --> B[Reward Components]
+    B --> C[Total Reward]
+    C --> D[Policy Update]
+    D -.-> E[LDM]
+    E -.-> A
 ```
-Generated Structure → Reward Components → Total Reward → Policy Update
-```
+For implementation details and the GRPO algorithm, see the [RL Module architecture guide](../../architecture/rl-module.md).
 
 ## Quick Start
 

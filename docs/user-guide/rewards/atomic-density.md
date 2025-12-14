@@ -10,10 +10,6 @@ $$\text{density} = \frac{M_{\text{total}}}{V_{\text{cell}}} \quad [\text{g/cm}^3
 
 Higher density = more mass packed per unit volume.
 
-## Prerequisites
-
-- Pre-trained LDM checkpoint (or use `${hub:mp_20_ldm_base}`)
-- Pre-trained VAE checkpoint (or use `${hub:mp_20_vae}`)
 
 ## Step 1: Understand the CustomReward Class
 
@@ -85,6 +81,10 @@ logger:
   wandb:
     name: rl_custom_reward
 ```
+
+:::{note}
+The `${hub:...}` syntax automatically downloads pre-trained models from HuggingFace. See [Automatic Download from HuggingFace](../training/index.md#automatic-download-from-huggingface) for details.
+:::
 
 ## Step 4: Run Training
 

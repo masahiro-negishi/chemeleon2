@@ -48,7 +48,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "custom_reward*"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

@@ -2,12 +2,31 @@
 
 This guide explains how to configure and customize reward functions for RL training in Chemeleon2.
 
-## What Are Rewards?
+## Why Verifiable Rewards?
 
-Reward functions define what properties to optimize during RL fine-tuning. The LDM learns to generate structures that maximize the total reward.
+Generative models for crystal structure generation face a fundamental **objective misalignment**: likelihood-based sampling inherently favors high-density regions of known compounds, while scientific discovery requires targeted exploration of underexplored regions where novel materials reside.
 
+Reward functions enable the model to optimize for **verifiable scientific objectives** beyond likelihood maximization:
+
+```{mermaid}
+flowchart LR
+    A[Generated Structure] --> B[Reward Components]
+    B --> C[Total Reward]
+    C --> D[Policy Update]
+    D -.-> E[LDM]
+    E -.-> A
 ```
-Generated Structure → Reward Components → Total Reward → Policy Update
+For implementation details and the GRPO algorithm, see the [RL Module architecture guide](../../architecture/rl-module.md).
+
+## Quick Start
+
+```bash
+# Run DNG reward training (multi-objective)
+python src/train_rl.py experiment=mp_20/rl_dng
+
+# Or with custom hyperparameters
+python src/train_rl.py experiment=mp_20/rl_dng \
+    rl_module.rl_configs.num_group_samples=128
 ```
 
 ## Quick Decision Guide
@@ -93,11 +112,11 @@ reward_fn:
   reference_dataset: mp-20    # For novelty/uniqueness metrics
   components:
     - _target_: src.rl_module.components.CreativityReward
-      weight: 1.0
-      normalize_fn: null
+      weight: 1.0 # Weight for this component (default 1.0)
+      normalize_fn: null # Component normalization
     - _target_: src.rl_module.components.EnergyReward
       weight: 0.5
-      normalize_fn: norm
+      normalize_fn: norm # Component normalization
 ```
 
 ### How Rewards Are Combined
@@ -108,9 +127,9 @@ reward_fn:
 4. All weighted rewards are summed
 5. Global normalization is applied (if specified)
 
-```
-Total = normalize_global( sum( weight_i * normalize_i(reward_i) ) )
-```
+:::{note}
+**Global vs Component Normalization**: `ReinforceReward.normalize_fn` applies **global normalization** to the final combined reward, while each component's `normalize_fn` applies **per-component normalization** before weighting. We recommend `std` for global normalization and `norm` or `null` for component normalization.
+:::
 
 ## Component Details
 
@@ -123,7 +142,7 @@ class CustomReward(RewardComponent):
     def compute(self, gen_structures: list[Structure], **kwargs) -> torch.Tensor:
         # Your custom logic here
         rewards = [your_function(s) for s in gen_structures]
-        return torch.tensor(rewards, dtype=torch.float32)
+        return torch.as_tensor(rewards)
 ```
 
 ### CreativityReward
@@ -168,13 +187,44 @@ Uses a trained predictor as surrogate model:
     _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
     checkpoint_path: "ckpts/predictor.ckpt"
     map_location: "cpu"
-  target_name: band_gap
+  target_name: dft_band_gap  # Must match predictor's target_conditions key
   target_value: 3.0    # Optional: optimize toward this value
   clip_min: 0.0        # Optional: bound predictions
 ```
 
 - If `target_value` is set: Returns `-(pred - target)²`
 - If `target_value` is None: Returns `pred` (maximize)
+- **Important**: `target_name` must match exactly with the key in predictor's `target_conditions`
+
+## RL Configuration
+
+Configure RL training behavior via `rl_module.rl_configs` (see [`configs/rl_module/rl_module.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/rl_module/rl_module.yaml)):
+
+```yaml
+rl_module:
+  rl_configs:
+    clip_ratio: 0.001
+    kl_weight: 1.0
+    entropy_weight: 1e-5
+    num_group_samples: 64
+    group_reward_norm: true
+    num_inner_batch: 2
+```
+
+### Parameter Details
+
+| Parameter | Default | Effect |
+|-----------|---------|--------|
+| `clip_ratio` | 0.001 | PPO clipping ratio. ↑ = larger policy updates (faster but unstable), ↓ = conservative updates (stable but slow) |
+| `kl_weight` | 1.0 | KL divergence penalty. ↑ = stays closer to original policy, ↓ = allows more deviation |
+| `entropy_weight` | 1e-5 | Entropy bonus. ↑ = more exploration/diversity, ↓ = more exploitation |
+| `num_group_samples` | 1 | Samples per group for GRPO. ↑ = stable gradients (slow), ↓ = noisy gradients (fast) |
+| `group_reward_norm` | false | Group reward normalization. `true` = GRPO (relative ranking), `false` = REINFORCE (absolute reward) |
+| `num_inner_batch` | 2 | Gradient accumulation steps. ↑ = larger effective batch size |
+
+:::{note}
+**GRPO vs REINFORCE**: Set `num_group_samples >= 32` and `group_reward_norm: true` for GRPO. Default config uses REINFORCE (`num_group_samples: 1`, `group_reward_norm: false`).
+:::
 
 ## Tutorials
 

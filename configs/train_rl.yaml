@@ -9,11 +9,12 @@ defaults:
 
   - _self_
   - experiment: null
+  - custom_reward: null
 
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
   default_root_dir: ${paths.output_dir}
-  max_steps: 10000
+  max_steps: 5000
   strategy: ddp
   accelerator: gpu
   devices: 1

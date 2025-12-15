@@ -72,6 +72,8 @@ filterwarnings = [
 target-version = "py311"
 # Black-compatible line length
 line-length = 88
+# Source directories for first-party imports
+src = [".", "src"]
 
 [tool.ruff.lint]
 # Rule sets to enable:

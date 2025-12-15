@@ -1,0 +1,25 @@
+# @package _global_
+# Predictor training for band gap on MP-20
+# Inherits most defaults from train_predictor.yaml, but defines custom data config inline
+
+data:
+  _target_: src.data.datamodule.DataModule
+  data_dir: ${paths.data_dir}/mp-20
+  batch_size: 256
+  dataset_type: "mp-20"
+  target_condition: band_gap
+
+predictor_module:
+  vae:
+    checkpoint_path: ${hub:mp_20_vae}
+
+  target_conditions:
+    band_gap:
+      mean: 0.792
+      std: 1.418
+
+logger:
+  wandb:
+    name: "predictor_band_gap"
+    group: "${task_name}/${data.dataset_type}"
+    tags: ["vae", "predictor", "band_gap"]

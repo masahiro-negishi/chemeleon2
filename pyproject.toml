@@ -129,6 +129,7 @@ max-complexity = 10
 [tool.ruff.lint.isort]
 # Ensure consistent first-party import detection across local and CI environments
 known-first-party = ["src", "custom_reward"]
+detect-same-package = false # Disable auto-detection to prevent package installation
 
 [tool.pyright]
 # Type checking mode - basic provides essential type checking without being overly strict

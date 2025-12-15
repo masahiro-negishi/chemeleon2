@@ -226,6 +226,27 @@ rl_module:
 **GRPO vs REINFORCE**: Set `num_group_samples >= 32` and `group_reward_norm: true` for GRPO. Default config uses REINFORCE (`num_group_samples: 1`, `group_reward_norm: false`).
 :::
 
+
+### Choosing a Starting Checkpoint
+
+When starting RL training, you can choose between two LDM checkpoint options:
+
+| Checkpoint | Description | Advantages | Disadvantages |
+|------------|-------------|------------|---------------|
+| `${hub:mp_20_ldm_base}` | Base LDM trained on likelihood | Broader chemical space exploration | No guarantee of high Msun structures |
+| `${hub:mp_20_ldm_rl_dng}` | RL-finetuned LDM (DNG reward) | Guarantees high Msun structures | Narrower chemical space |
+
+:::{tip}
+**Recommended**: Start with `${hub:mp_20_ldm_base}` as your baseline. While `ldm_rl_dng` guarantees high Msun (match with training set), it may have learned a narrower chemical space. Starting from the base checkpoint allows your custom reward to explore more diverse material compositions.
+:::
+
+Example configuration:
+```yaml
+rl_module:
+  ldm_ckpt_path: ${hub:mp_20_ldm_base}  # Recommended: broader exploration
+  vae_ckpt_path: ${hub:mp_20_vae}
+```
+
 ## Tutorials
 
 - [Atomic Density](atomic-density.md) - Simple custom reward example

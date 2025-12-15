@@ -1,6 +1,6 @@
 """Hyperparameter sweep script for VAE training."""
 
-from functools import partial
+from functools import partial  # noqa: I001
 
 import hydra
 import wandb

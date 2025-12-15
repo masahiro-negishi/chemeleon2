@@ -34,6 +34,10 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      # Debug: Show ruff isort settings
+      - name: Debug ruff settings
+        run: ruff check src/sweep_vae.py --show-settings 2>&1 | grep -A10 "isort"
+
       # Ruff lint check (must match pre-commit hook behavior)
       - name: Ruff lint check
         run: ruff check .

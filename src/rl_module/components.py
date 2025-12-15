@@ -7,10 +7,8 @@ import amd
 import torch
 from pymatgen.core import Structure
 
-from src.data.schema import CrystalBatch
 from src.utils.featurizer import featurize
 from src.utils.metrics import Metrics, structures_to_amd
-from src.vae_module.predictor_module import PredictorModule
 
 ###############################################################################
 #                              Reward Components                              #
@@ -213,47 +211,6 @@ class CompositionDiversityReward(RewardComponent):
             z_gen=gen_composition_features, z_ref=ref_composition_features
         )["r_indiv"]
         return r_composition_diversity
-
-
-class PredictorReward(RewardComponent):
-    """Rewards structures based on Predictor module as a surrogate model."""
-
-    required_metrics = []
-
-    def __init__(
-        self,
-        predictor: PredictorModule,
-        target_name: str,
-        target_value: float | None = None,
-        clip_max: float | None = None,
-        clip_min: float | None = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.predictor = predictor
-        self.target_name = target_name
-        self.target_value = target_value
-        self.clip_max = clip_max
-        self.clip_min = clip_min
-        self.predictor.eval()
-
-    def compute(self, batch_gen: CrystalBatch, **kwargs) -> torch.Tensor:
-        device = self.predictor.device
-        batch_gen = batch_gen.to(device)  # Ensure batch is on the correct device
-
-        # Get predictions from the predictor
-        pred = self.predictor.predict(batch_gen)
-        pred_val = pred[self.target_name].clamp(min=self.clip_min, max=self.clip_max)
-
-        # Compute reward based on target value
-        if self.target_value is not None:
-            # Reward is negative squared error if target is specified
-            reward = -((pred_val - self.target_value) ** 2)
-        else:
-            # Otherwise maximize the predicted value
-            reward = pred_val
-
-        return reward
 
 
 ###############################################################################

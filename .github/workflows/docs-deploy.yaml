@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/custom-reward-001  # TODO: REMOVE THIS BRANCH AFTER MERGING TO MAIN
     paths:
       - 'docs/**'
       - 'src/**/*.py'
@@ -50,10 +49,8 @@ jobs:
           path: docs/_build/html
 
   deploy:
-    # TODO: RESTORE THIS AFTER DEBUGGING - Only deploy on push to main (not on PRs)
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # TEMPORARY: Allow deployment from feat branches for debugging
-    if: github.event_name == 'push'
+    # Only deploy on push to main (not on PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:

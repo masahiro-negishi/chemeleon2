@@ -186,6 +186,7 @@ In WandB, watch these metrics:
 | `train/entropy` | Policy entropy |
 | `train/loss` | Total policy loss |
 
+(weight-tuning-guide)=
 ## Weight Tuning Guide
 
 Adjust weights based on your priorities:
@@ -212,6 +213,50 @@ components:
     weight: 0.5
     normalize_fn: norm
 ```
+
+## Generating and Evaluating Samples
+
+After training your DNG model, you can generate 10,000 structures and evaluate them against reference datasets to assess quality.
+
+### Generate Samples
+
+Generate crystal structures using the trained RL model:
+
+```bash
+# Generate 10000 samples with batch size 2000
+python src/sample.py \
+    --ldm_ckpt_path=logs/train_rl/runs/<your-run>/checkpoints/last.ckpt \
+    --num_samples=10000 \
+    --batch_size=2000 \
+    --output_dir=outputs/dng_samples
+```
+
+### Evaluate Samples
+
+The evaluation computes several quality metrics:
+
+| Metric | Description |
+|--------|-------------|
+| **Unique** | Structures not duplicated within generated set |
+| **Novel** | Structures not found in reference dataset |
+| **E Above Hull** | Energy above convex hull (stability measure) |
+| **Metastable/Stable** | Thermodynamically viable structures |
+| **Composition Validity** | Chemically valid compositions (via SMACT) |
+| **Structure Diversity** | Inverse Fréchet distance for structure embeddings |
+| **Composition Diversity** | Inverse Fréchet distance for composition embeddings |
+
+```bash
+python src/evaluate.py \
+    --model_path=logs/train_rl/runs/<your-run>/checkpoints/last.ckpt \
+    --structure_path=outputs/dng_samples \
+    --num_samples=10000 \
+    --batch_size=2000 \
+    --output_file=outputs/dng_samples/results.csv
+```
+
+:::{tip}
+See [Evaluation Guide](../evaluation.md) for detailed usage and Python API examples.
+:::
 
 ## Summary
 

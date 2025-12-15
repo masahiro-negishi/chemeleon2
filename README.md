@@ -7,6 +7,13 @@ A reinforcement learning framework in latent diffusion models for crystal struct
   <img src="assets/logo.png" alt="Chemeleon2 logo" width="260">
 </p>
 
+<p align="center">
+  <a href="https://arxiv.org/abs/2511.07158"><img src="https://img.shields.io/badge/arXiv-2511.07158-b31b1b.svg" alt="arXiv"></a>
+  <a href="https://hspark1212.github.io/chemeleon2/"><img src="https://img.shields.io/badge/📚%20docs-tutorial-blue.svg" alt="Documentation"></a>
+  <a href="https://github.com/hspark1212/chemeleon2/releases"><img src="https://img.shields.io/github/v/release/hspark1212/chemeleon2" alt="GitHub release"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
 ## Overview
 
 Chemeleon2 implements a three-stage pipeline for crystal structure generation:

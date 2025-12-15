@@ -8,6 +8,7 @@ defaults:
   - hydra: default
   - _self_
   - experiment: null
+  - custom_reward: null
 
 predictor_module:
   _target_: src.vae_module.predictor_module.PredictorModule

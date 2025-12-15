@@ -1,0 +1,43 @@
+# @package _global_
+# RL Custom Reward Experiment Configuration
+#
+# Example: Band gap predictor-based reward using BandGapPredictorReward
+# See user guide: docs/user-guide/rewards/predictor-reward.md
+
+data:
+  data_dir: ${paths.data_dir}/mp-20
+  batch_size: 5
+
+trainer:
+  max_steps: 1000
+  strategy: ddp_find_unused_parameters_true
+
+rl_module:
+  ldm_ckpt_path: ${hub:mp_20_ldm_base}
+  vae_ckpt_path: ${hub:mp_20_vae}
+
+  rl_configs:
+    num_group_samples: 64
+    group_reward_norm: true
+
+  reward_fn:
+    normalize_fn: std
+    eps: 1e-4
+    reference_dataset: mp-20
+    components:
+      - _target_: custom_reward.predictor_bandgap.BandGapPredictorReward
+        weight: 1.0
+        normalize_fn: norm
+        predictor:
+          _target_: src.vae_module.predictor_module.PredictorModule.load_from_checkpoint
+          checkpoint_path: "ckpts/mp_20/predictor/predictor_band_gap.ckpt" # Change your checkpoint path
+          map_location: "cpu"
+        target_value: 3.0 # Target: wide band gap (3.0 eV)
+        clip_min: 0.0 # Band gap cannot be negative
+      - _target_: src.rl_module.components.CompositionDiversityReward
+        weight: 0.5
+        normalize_fn: norm
+
+logger:
+  wandb:
+    name: rl_bandgap

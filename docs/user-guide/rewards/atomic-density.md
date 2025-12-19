@@ -65,8 +65,8 @@ trainer:
   max_steps: 200
 
 rl_module:
-  ldm_ckpt_path: ${hub:mp_20_ldm_base}
-  vae_ckpt_path: ${hub:mp_20_vae}
+  ldm_ckpt_path: ${hub:alex_mp_20_ldm_base}
+  vae_ckpt_path: ${hub:alex_mp_20_vae}
 
   rl_configs:
     num_group_samples: 64

@@ -164,9 +164,10 @@ python src/train_rl.py custom_reward=rl_dng \
     rl_module.rl_configs.num_group_samples=128 \
     trainer.max_steps=2000
 
-# Override checkpoint paths
+# Override checkpoint paths (e.g., use alex_mp_20 model)
 python src/train_rl.py custom_reward=rl_dng \
-    rl_module.ldm_ckpt_path=ckpts/my_ldm.ckpt
+    rl_module.ldm_ckpt_path='${hub:alex_mp_20_ldm_base}' \
+    rl_module.vae_ckpt_path='${hub:alex_mp_20_vae}'
 ```
 
 ## Monitoring Training

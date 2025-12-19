@@ -225,8 +225,8 @@ trainer:
   strategy: ddp_find_unused_parameters_true  # Required when using predictor-based rewards
 
 rl_module:
-  ldm_ckpt_path: ${hub:mp_20_ldm_base}
-  vae_ckpt_path: ${hub:mp_20_vae}
+  ldm_ckpt_path: ${hub:alex_mp_20_ldm_base} # or ${hub:alex_mp_20_ldm_rl}
+  vae_ckpt_path: ${hub:alex_mp_20_vae}
 
   rl_configs:
     num_group_samples: 64

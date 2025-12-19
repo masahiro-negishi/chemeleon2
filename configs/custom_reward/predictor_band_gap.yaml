@@ -11,7 +11,7 @@ data:
 
 predictor_module:
   vae:
-    checkpoint_path: ${hub:mp_20_vae}
+    checkpoint_path: ${hub:alex_mp_20_vae}
 
   target_conditions:
     band_gap:

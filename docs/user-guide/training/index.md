@@ -111,13 +111,14 @@ python src/train_ldm.py ldm_module.vae_ckpt_path='${hub:mp_20_vae}'
 ```
 
 :::{tip} Available Pre-trained Checkpoints on HuggingFace
-| Hub Key | Description |
-|---------|-------------|
-| `mp_20_vae` | VAE trained on MP-20 dataset |
-| `alex_mp_20_vae` | VAE trained on Alex MP-20 dataset |
-| `mp_20_ldm_base` | Base LDM on MP-20 (before RL) |
-| `mp_20_ldm` | LDM with RL fine-tuning on MP-20 |
-| `alex_mp_20_ldm` | LDM with RL fine-tuning on Alex MP-20 |
+| Hub Key | Dataset | Description |
+|---------|---------|-------------|
+| `mp_20_vae` | MP-20 | pre-trained VAE|
+| `alex_mp_20_vae` | Alex-MP-20 | pre-trained VAE|
+| `mp_20_ldm_base` | MP-20 | pre-trained LDM|
+| `alex_mp_20_ldm_base` | Alex-MP-20 | pre-trained LDM|
+| `mp_20_ldm_rl`| MP-20 | Fine-tuned LDM with RL for DNG rewards|
+| `alex_mp_20_ldm_rl` | Alex-MP-20 | Fine-tuned LDM with RL for DNG rewards|
 :::
 
 ### Local File Paths

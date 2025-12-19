@@ -50,15 +50,16 @@ Example config: [`configs/experiment/mp_20/rl_dng.yaml`](https://github.com/hspa
 ### Basic Training
 
 ```bash
-# Use experiment config
-python src/train_rl.py experiment=mp_20/rl_dng
+# Use custom reward config
+python src/train_rl.py custom_reward=rl_dng
 
-# Override checkpoint paths
-python src/train_rl.py experiment=mp_20/rl_dng \
-    rl_module.ldm_ckpt_path=ckpts/my_ldm.ckpt
+# Override checkpoint paths (e.g., use alex_mp_20 model)
+python src/train_rl.py custom_reward=rl_dng \
+    rl_module.ldm_ckpt_path='${hub:alex_mp_20_ldm_base}' \
+    rl_module.vae_ckpt_path='${hub:alex_mp_20_vae}'
 
 # Override RL hyperparameters
-python src/train_rl.py experiment=mp_20/rl_dng \
+python src/train_rl.py custom_reward=rl_dng \
     rl_module.rl_configs.num_group_samples=128 \
     data.batch_size=8
 ```
@@ -85,13 +86,13 @@ Chemeleon2 uses **Group Relative Policy Optimization (GRPO)** for efficient RL t
 
 ```bash
 # Example: adjust group size
-python src/train_rl.py experiment=mp_20/rl_dng \
+python src/train_rl.py custom_reward=rl_dng \
     rl_module.rl_configs.num_group_samples=128
 ```
 
 ## Reward Configuration
 
-Rewards are defined in the `reward_fn` section of the config (see [`configs/experiment/mp_20/rl_dng.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/experiment/mp_20/rl_dng.yaml)):
+Rewards are defined in the `reward_fn` section of the config (see [`configs/train_rl.yaml`](https://github.com/hspark1212/chemeleon2/blob/main/configs/train_rl.yaml) for defaults):
 
 ```yaml
 rl_module:
@@ -119,11 +120,11 @@ See [Custom Rewards Guide](../rewards/index.md) for detailed component documenta
 
 ## Available Experiments
 
-| Experiment | Dataset | Reward | Description |
+| Custom Reward Config | Dataset | Reward | Description |
 |------------|---------|--------|-------------|
-| `rl_custom_reward` | MP-20 | Custom | Example: atomic density optimization (see [Custom Reward tutorial](../rewards/atomic-density.md)) |
-| `mp_20/rl_dng` | MP-20 | DNG (multi-objective) | Paper's de novo generation (see [DNG Reward tutorial](../rewards/dng-reward.md)) |
-| `alex_mp_20_bandgap/rl_bandgap` | Alex MP-20 | Predictor-based | Band gap optimization (see [Predictor Reward tutorial](../rewards/predictor-reward.md)) |
+| `atomic_density` | Alex MP-20 | Custom | Example: atomic density optimization (see [Custom Reward tutorial](../rewards/atomic-density.md)) |
+| `rl_dng` | MP-20 | DNG (multi-objective) | Paper's de novo generation (see [DNG Reward tutorial](../rewards/dng-reward.md)) |
+| `rl_bandgap` | Alex MP-20 | Predictor-based | Band gap optimization (see [Predictor Reward tutorial](../rewards/predictor-reward.md)) |
 
 ## Training Tips
 

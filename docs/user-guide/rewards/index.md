@@ -22,10 +22,10 @@ For implementation details and the GRPO algorithm, see the [RL Module architectu
 
 ```bash
 # Run DNG reward training (multi-objective)
-python src/train_rl.py experiment=mp_20/rl_dng
+python src/train_rl.py custom_reward=rl_dng
 
 # Or with custom hyperparameters
-python src/train_rl.py experiment=mp_20/rl_dng \
+python src/train_rl.py custom_reward=rl_dng \
     rl_module.rl_configs.num_group_samples=128
 ```
 
@@ -46,7 +46,6 @@ All components are in [`src/rl_module/components.py`](https://github.com/hspark1
 | Component | Description | Required Metrics |
 |-----------|-------------|------------------|
 | `CustomReward` | User-defined reward function | None |
-| `PredictorReward` | Property prediction from trained predictor | None |
 | `CreativityReward` | Rewards unique and novel structures | `unique`, `novel` |
 | `EnergyReward` | Penalizes high energy above convex hull | `e_above_hull` |
 | `StructureDiversityReward` | Rewards diverse crystal geometries (MMD) | `structure_diversity` |
@@ -231,21 +230,29 @@ rl_module:
 
 When starting RL training, you can choose between two LDM checkpoint options:
 
-| Checkpoint | Description | Advantages | Disadvantages |
-|------------|-------------|------------|---------------|
-| `${hub:mp_20_ldm_base}` | Base LDM trained on likelihood | Broader chemical space exploration | No guarantee of high Msun structures |
-| `${hub:mp_20_ldm_rl_dng}` | RL-finetuned LDM (DNG reward) | Guarantees high Msun structures | Narrower chemical space |
-
-:::{tip}
-**Recommended**: Start with `${hub:mp_20_ldm_base}` as your baseline. While `ldm_rl_dng` guarantees high Msun (match with training set), it may have learned a narrower chemical space. Starting from the base checkpoint allows your custom reward to explore more diverse material compositions.
-:::
+| Checkpoint | Description |
+|------------|-------------|
+| `${hub:mp_20_ldm_base}` | LDM trained on MP-20 dataset without RL fine-tuning |
+| `${hub:mp_20_ldm_rl}` | LDM fine-tuned with DNG reward on MP-20 dataset |
+| `${hub:alex_mp_20_ldm_base}` | LDM trained on Alex-MP-20 dataset without RL fine-tuning |
+| `${hub:alex_mp_20_ldm_rl}` | LDM fine-tuned with DNG reward on Alex-MP-20 dataset |
 
 Example configuration:
 ```yaml
+# Use mp-20 model
 rl_module:
-  ldm_ckpt_path: ${hub:mp_20_ldm_base}  # Recommended: broader exploration
+  ldm_ckpt_path: ${hub:mp_20_ldm_base}  # or ${hub:mp_20_ldm_rl}
   vae_ckpt_path: ${hub:mp_20_vae}
+
+# Use alex-mp-20 model
+rl_module:
+  ldm_ckpt_path: ${hub:alex_mp_20_ldm_base} # or ${hub:alex_mp_20_ldm_rl}
+  vae_ckpt_path: ${hub:alex_mp_20_vae}
 ```
+
+:::{tip}
+**Recommended**: Start with `${hub:mp_20_ldm_base}` as your baseline. While `${hub:mp_20_ldm_rl}` guarantees high Msun (match with training set), it may have learned a narrower chemical space. Starting from the base checkpoint allows your custom reward to explore more diverse material compositions.
+:::
 
 ## Tutorials
 

@@ -11,6 +11,8 @@ from lightning import LightningModule
 from src.data.schema import CrystalBatch
 from src.ldm_module.diffusion import create_diffusion
 from src.ldm_module.ldm_module import LDMModule
+from src.rl_module.components import BSUNReward, CSUNReward
+from src.rl_module.reward import ReinforceReward
 
 
 class RLModule(LightningModule):
@@ -60,6 +62,22 @@ class RLModule(LightningModule):
         new_diffusion_configs = self.ldm.hparams.diffusion_configs.copy()
         new_diffusion_configs.update(timestep_respacing=timestep_respacing)
         self.sampling_diffusion = create_diffusion(**new_diffusion_configs)
+
+        # evaluators for validation
+        if len(reward_fn.components) == 1 and isinstance(
+            reward_fn.components[0], BSUNReward
+        ):
+            print("Using the provided reward function as BSUN evaluator.")
+            self.reward_b_sun = reward_fn
+        else:
+            self.reward_b_sun = ReinforceReward(torch.nn.ModuleList([BSUNReward()]))
+        if len(reward_fn.components) == 1 and isinstance(
+            reward_fn.components[0], CSUNReward
+        ):
+            print("Using the provided reward function as CSUN evaluator.")
+            self.reward_c_sun = reward_fn
+        else:
+            self.reward_c_sun = ReinforceReward(torch.nn.ModuleList([CSUNReward()]))
 
     @torch.no_grad()
     def rollout(self, batch: CrystalBatch) -> dict:
@@ -276,6 +294,8 @@ class RLModule(LightningModule):
                 for _ in range(self.num_group_samples)
             ]
         )
+        # Maybe more efficient way:
+        # total_batch = batch.repeat(self.num_group_samples)
 
         # Rollout
         batch_gen, _ = self.rollout(total_batch)
@@ -283,8 +303,17 @@ class RLModule(LightningModule):
         # Compute rewards
         rewards, advantages = self.compute_rewards(batch_gen)
 
+        # Compute (c)SUN metrics
+        bsuns = self.reward_b_sun(batch_gen, device=self.device)
+        csuns = self.reward_c_sun(batch_gen, device=self.device)
+
         self._log_metrics(
-            dict(reward=rewards.mean().item(), advantages=advantages.mean().item()),
+            dict(
+                reward=rewards.mean().item(),
+                advantages=advantages.mean().item(),
+                bsun=bsuns.mean().item(),
+                csun=csuns.mean().item(),
+            ),
             split="val",
             batch_size=batch.num_graphs,
         )

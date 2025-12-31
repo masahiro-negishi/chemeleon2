@@ -1,11 +1,18 @@
 """Reward components for reinforcement learning."""
 
+import gzip
+import pickle
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
 import amd
+import numpy as np
 import torch
+from ElMD import ElMD
+from huggingface_hub import hf_hub_download
 from pymatgen.core import Structure
+from xtalmet.constants import HF_VERSION
+from xtalmet.crystal import Crystal
 
 from src.utils.featurizer import featurize
 from src.utils.metrics import Metrics, structures_to_amd
@@ -82,6 +89,153 @@ class CustomReward(RewardComponent):
     def compute(self, gen_structures: list[Structure], **kwargs) -> torch.Tensor:
         """Placeholder for custom reward function."""
         return torch.zeros(len(gen_structures))
+
+
+class BSUNReward(RewardComponent):
+    """Binary SUN reward using StructureMatcher."""
+
+    required_metrics = ["unique", "novel", "e_above_hull"]
+
+    def compute(
+        self, gen_structures: list[Structure], metrics_obj: Metrics, **kwargs
+    ) -> torch.Tensor:
+        return torch.as_tensor(metrics_obj._results["MSUN"]).float()
+
+
+class CSUNReward(RewardComponent):
+    """Continuous SUN reward using ElMD+AMD."""
+
+    required_metrics = ["e_above_hull"]
+
+    def __init__(
+        self,
+        weight: float = 1.0,
+        normalize_fn: str | None = None,
+        eps: float = 1e-4,
+    ):
+        super().__init__(
+            weight=weight,
+            normalize_fn=normalize_fn,
+            eps=eps,
+        )
+        print("Downloading MP-20 training data from Hugging Face...")
+        path_embs_train = hf_hub_download(
+            repo_id="masahiro-negishi/xtalmet",
+            filename="mp20/train/train_elmd+amd.pkl.gz",
+            repo_type="dataset",
+            revision=HF_VERSION,
+        )
+        with gzip.open(path_embs_train, "rb") as f:
+            ref_embs = pickle.load(f)
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.ref_embs_elmd = torch.tensor(
+            np.stack([ElMD(emb[0]).feature_vector for emb in ref_embs])
+        ).to(device)
+        self.ref_embs_amd = torch.tensor(np.stack([emb[1] for emb in ref_embs])).to(
+            device
+        )
+        self.device = device
+
+    def compute(
+        self, gen_structures: list[Structure], metrics_obj: Metrics, **kwargs
+    ) -> torch.Tensor:
+        # embeddings
+        gen_xtals = [Crystal.from_Structure(s) for s in gen_structures]
+        gen_embs_elmd = torch.tensor(
+            np.stack(
+                [ElMD(xtal._get_emb_d_elmd()).feature_vector for xtal in gen_xtals]
+            )
+        ).to(self.device)
+        gen_embs_amd = []
+        error_indices = []
+        for i, xtal in enumerate(gen_xtals):
+            try:
+                emb_amd = xtal._get_emb_d_amd()
+                gen_embs_amd.append(emb_amd)
+            except Exception:
+                error_indices.append(i)
+        gen_embs_amd = torch.tensor(np.stack(gen_embs_amd)).to(self.device)
+
+        # coeff
+        coef_elmd = float.fromhex("0x1.8d7d565a99f87p-1")
+        coef_amd = float.fromhex("0x1.ca0aa695981e5p-3")
+
+        # uniqueness
+        d_mtx_uni_elmd = torch.sum(
+            torch.abs(
+                (gen_embs_elmd[:, None, :] - gen_embs_elmd[None, :, :]).cumsum(dim=-1)
+            ),
+            dim=-1,
+        )
+        d_mtx_uni_amd = torch.max(
+            torch.abs(gen_embs_amd[:, None, :] - gen_embs_amd[None, :, :]), dim=-1
+        )[0]
+        for i in error_indices:
+            d_mtx_uni_amd = torch.cat(
+                [
+                    d_mtx_uni_amd[:i, :],
+                    torch.full((1, d_mtx_uni_amd.shape[1]), float("nan")).to(
+                        self.device
+                    ),
+                    d_mtx_uni_amd[i:, :],
+                ],
+                dim=0,
+            )
+            d_mtx_uni_amd = torch.cat(
+                [
+                    d_mtx_uni_amd[:, :i],
+                    torch.full((d_mtx_uni_amd.shape[0], 1), float("nan")).to(
+                        self.device
+                    ),
+                    d_mtx_uni_amd[:, i:],
+                ],
+                dim=1,
+            )
+        d_mtx_uni = coef_elmd * d_mtx_uni_elmd / (
+            1 + d_mtx_uni_elmd
+        ) + coef_amd * d_mtx_uni_amd / (1 + d_mtx_uni_amd)
+        uni_scores = torch.sum(d_mtx_uni, dim=1) / (len(gen_structures) - 1)
+        uni_scores = uni_scores.cpu().numpy()
+
+        # novelty
+        d_mtx_nov_elmd = torch.sum(
+            torch.abs(
+                (gen_embs_elmd[:, None, :] - self.ref_embs_elmd[None, :, :]).cumsum(
+                    dim=-1
+                )
+            ),
+            dim=-1,
+        )
+        d_mtx_nov_amd = torch.max(
+            torch.abs(gen_embs_amd[:, None, :] - self.ref_embs_amd[None, :, :]), dim=-1
+        )[0]
+        for i in error_indices:
+            d_mtx_nov_amd = torch.cat(
+                [
+                    d_mtx_nov_amd[:i, :],
+                    torch.full((1, d_mtx_nov_amd.shape[1]), float("nan")).to(
+                        self.device
+                    ),
+                    d_mtx_nov_amd[i:, :],
+                ],
+                dim=0,
+            )
+        d_mtx_nov = coef_elmd * d_mtx_nov_elmd / (
+            1 + d_mtx_nov_elmd
+        ) + coef_amd * d_mtx_nov_amd / (1 + d_mtx_nov_amd)
+        nov_scores = torch.min(d_mtx_nov, dim=1)[0]
+        nov_scores = nov_scores.cpu().numpy()
+
+        # stability
+        stability_scores = np.zeros(len(gen_structures), dtype=float)
+        isnan = np.isnan(metrics_obj._results["e_above_hull"])
+        stability_scores[~isnan] = np.clip(
+            1 - metrics_obj._results["e_above_hull"][~isnan] / 0.4289, 0, 1
+        )
+        scores = stability_scores * uni_scores * nov_scores
+        scores[np.isnan(scores)] = 0.0
+        return torch.from_numpy(scores).float()
 
 
 ###############################################################################

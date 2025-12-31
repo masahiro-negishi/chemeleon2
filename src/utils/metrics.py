@@ -41,7 +41,7 @@ PATH_REFERENCE_COMPOSITION_FEATURES = {
     "alex": BENCHMARK_DIR / "assets" / "alex_mp_20_all_composition_features.pt",
 }
 PATH_PHASE_DIAGRAM = {  # find details in "benchmarks/assets/README.md"
-    "mp-all": BENCHMARK_DIR / "assets" / "ppd-mp_all_entries_uncorrected_250409.pkl.gz",
+    "mp-all": BENCHMARK_DIR / "assets" / "ppd-mp_all_entries_uncorrected_250618.pkl.gz",
     "alex-mp-20": BENCHMARK_DIR
     / "assets"
     / "ppd-alex_mp_20_entries_uncorrected_250730.pkl.gz",

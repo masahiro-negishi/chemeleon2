@@ -1,0 +1,23 @@
+# @package _global_
+# GRPO for DNG on MP-20
+# Inherits all defaults from train_rl.yaml
+
+data:
+  batch_size: 5
+
+rl_module:
+  ldm_ckpt_path: ${hub:mp_20_ldm_base}
+  vae_ckpt_path: ${hub:mp_20_vae}
+
+  rl_configs:
+    num_group_samples: 64
+    group_reward_norm: true
+
+  reward_fn:
+    _target_: src.rl_module.reward.ReinforceReward
+    components:
+      - _target_: src.rl_module.components.BSUNReward
+
+logger:
+  wandb:
+    name: rl_dng_grpo

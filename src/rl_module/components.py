@@ -112,6 +112,9 @@ class CSUNReward(RewardComponent):
         weight: float = 1.0,
         normalize_fn: str | None = None,
         eps: float = 1e-4,
+        w_s: float = 1.0,
+        w_u: float = 1.0,
+        w_n: float = 1.0,
     ):
         super().__init__(
             weight=weight,
@@ -136,6 +139,9 @@ class CSUNReward(RewardComponent):
             device
         )
         self.device = device
+        self.w_s = w_s
+        self.w_u = w_u
+        self.w_n = w_n
 
     def compute(
         self, gen_structures: list[Structure], metrics_obj: Metrics, **kwargs
@@ -233,7 +239,11 @@ class CSUNReward(RewardComponent):
         stability_scores[~isnan] = np.clip(
             1 - metrics_obj._results["e_above_hull"][~isnan] / 0.4289, 0, 1
         )
-        scores = stability_scores * uni_scores * nov_scores
+        scores = (
+            (stability_scores**self.w_s)
+            * (uni_scores**self.w_u)
+            * (nov_scores**self.w_n)
+        )
         scores[np.isnan(scores)] = 0.0
         return torch.from_numpy(scores).float()
 

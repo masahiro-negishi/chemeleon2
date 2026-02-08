@@ -71,13 +71,7 @@ class RLModule(LightningModule):
             self.reward_b_sun = reward_fn
         else:
             self.reward_b_sun = ReinforceReward(torch.nn.ModuleList([BSUNReward()]))
-        if len(reward_fn.components) == 1 and isinstance(
-            reward_fn.components[0], CSUNReward
-        ):
-            print("Using the provided reward function as CSUN evaluator.")
-            self.reward_c_sun = reward_fn
-        else:
-            self.reward_c_sun = ReinforceReward(torch.nn.ModuleList([CSUNReward()]))
+        self.reward_c_sun = ReinforceReward(torch.nn.ModuleList([CSUNReward()]))
 
     @torch.no_grad()
     def rollout(self, batch: CrystalBatch) -> dict:

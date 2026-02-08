@@ -17,6 +17,9 @@ rl_module:
     _target_: src.rl_module.reward.ReinforceReward
     components:
       - _target_: src.rl_module.components.CSUNReward
+        w_s: 1.0
+        w_u: 3.0
+        w_n: 1.0
 
 logger:
   wandb:

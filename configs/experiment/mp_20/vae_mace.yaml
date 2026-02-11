@@ -1,0 +1,25 @@
+# @package _global_
+# VAE training with MACE embeddings on MP-20
+
+defaults:
+  - override /vae_module/encoder: precomputed_mace
+
+trainer:
+  max_epochs: 5000
+
+data:
+  mace_embeddings: true  # Enable MACE embeddings (automatically pre-computed)
+  mace_precompute_params:
+    model: "mh-1"            # MACE model name
+    head: "omat_pbe"         # MACE head name (for multihead models)
+    hidden_dim: 512          # Expected embedding dimension (for validation)
+    device: "cuda"           # Compute device (optional, auto-detects if omitted)
+
+vae_module:
+  atom_type_predict: true
+
+logger:
+  wandb:
+    name: "vae_mace"
+    group: "${task_name}/${data.dataset_type}"
+    tags: ["vae", "mace"]

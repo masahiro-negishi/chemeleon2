@@ -13,6 +13,7 @@ from src.data.data_augmentation import apply_augmentation, apply_noise
 from src.data.dataset_util import lattice_params_to_matrix_torch
 from src.data.schema import CrystalBatch, create_empty_batch
 from src.utils.timeout import timeout
+from src.vae_module.encoders.precomputed_mace import PrecomputedMACEEncoder
 
 
 class VAEModule(LightningModule):
@@ -57,7 +58,16 @@ class VAEModule(LightningModule):
     def encode(self, batch: CrystalBatch) -> dict:
         encoded = self.encoder(batch)
         encoded["moments"] = self.quant_conv(encoded["x"])
-        encoded["posterior"] = DiagonalGaussianDistribution(encoded["moments"])
+
+        # Use deterministic posterior for PrecomputedMACEEncoder (no KL loss).
+        # Pre-computed embeddings are already optimized, no need for variational bottleneck.
+        # NOTE: This could be improved with an encoder interface property in the future,
+        # but isinstance check works fine for now.
+        is_deterministic = isinstance(self.encoder, PrecomputedMACEEncoder)
+        encoded["posterior"] = DiagonalGaussianDistribution(
+            encoded["moments"],
+            deterministic=is_deterministic
+        )
         return encoded
 
     def decode(self, encoded: dict) -> dict:

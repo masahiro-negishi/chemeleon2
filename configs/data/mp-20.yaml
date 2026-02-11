@@ -4,5 +4,7 @@ batch_size: 256
 dataset_type: "mp_20"
 target_condition: null
 mace_features: false
+mace_embeddings: false
+mace_precompute_params: null
 num_workers: 16
 pin_memory: false

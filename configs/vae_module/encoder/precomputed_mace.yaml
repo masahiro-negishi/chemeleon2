@@ -1,0 +1,4 @@
+_target_: src.vae_module.encoders.precomputed_mace.PrecomputedMACEEncoder
+
+hidden_dim: 512  # MACE mh-1 output dimension (invariants only)
+max_num_elements: 100

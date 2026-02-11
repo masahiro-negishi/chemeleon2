@@ -29,6 +29,7 @@ class MPDataset(InMemoryDataset):
         split: str,
         target_condition: str | Iterable[str] | None = None,
         mace_features: bool = False,
+        mace_embeddings: bool = False,
         transform: Callable[[Data], Data] | None = None,
         pre_transform: Callable[[Data], Data] | None = None,
     ) -> None:
@@ -39,12 +40,14 @@ class MPDataset(InMemoryDataset):
             split: Dataset split name (train/val/test).
             target_condition: Optional target property for conditioning.
             mace_features: Whether to load MACE structural features.
+            mace_embeddings: Whether to load pre-computed MACE embeddings.
             transform: Optional transform to apply on-the-fly.
             pre_transform: Optional transform to apply during processing.
         """
         self.split = split
         self.target_condition = target_condition
         self.mace_features = mace_features
+        self.mace_embeddings = mace_embeddings
 
         # Load raw DataFrame for dynamic condition lookup
         raw_path = os.path.join(root, f"{self.split}.csv")
@@ -63,6 +66,16 @@ class MPDataset(InMemoryDataset):
                 for material_id in self.df["material_id"]:
                     if str(material_id) in f:
                         self.mace_features_dict[material_id] = torch.tensor(
+                            f[str(material_id)][:]  # type: ignore[index]
+                        )
+
+        # Optionally add MACE embeddings
+        if mace_embeddings:
+            self.mace_embeddings_dict = dict()
+            with h5py.File(os.path.join(root, "mace_embeddings.h5"), "r") as f:
+                for material_id in self.df["material_id"]:
+                    if str(material_id) in f:
+                        self.mace_embeddings_dict[material_id] = torch.tensor(
                             f[str(material_id)][:]  # type: ignore[index]
                         )
 
@@ -154,4 +167,10 @@ class MPDataset(InMemoryDataset):
         if self.mace_features:
             material_id = self.df.loc[idx, "material_id"]
             data.mace_features = self.mace_features_dict[material_id]
+
+        # Dynamically attach MACE embeddings if available
+        if self.mace_embeddings:
+            material_id = self.df.loc[idx, "material_id"]
+            data.mace_embeddings = self.mace_embeddings_dict[material_id]
+
         return data

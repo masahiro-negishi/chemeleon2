@@ -2,7 +2,7 @@ _target_: lightning.pytorch.trainer.Trainer
 
 default_root_dir: ${paths.output_dir}
 
-strategy: ddp
+strategy: auto
 
 min_epochs: 1000
 max_epochs: 5000

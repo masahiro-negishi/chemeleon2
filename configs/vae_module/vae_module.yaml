@@ -5,12 +5,16 @@ defaults:
 _target_: src.vae_module.vae_module.VAEModule
 
 latent_dim: 8
+distance_threshold: 10.0  # Threshold for sparse distance loss (Ångströms)
 
 loss_weights:
   atom_types: 1.0
   lengths: 1.0
   angles: 10.0
   frac_coords: 10.0
+  distance_matrix: 0.0  # Deprecated: use distance_regression and distance_classifier instead
+  distance_regression: 0.0  # Disabled by default (opt-in for distance matrix decoder)
+  distance_classifier: 0.0  # Disabled by default (opt-in for distance matrix decoder)
   kl: 1e-5
   fa: 0.0
 

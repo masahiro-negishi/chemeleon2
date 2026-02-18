@@ -106,3 +106,83 @@ def dummy_crystal_batch(device):
         return CrystalBatch.from_data_list(data_list).to(device=device)
 
     return _create_batch
+
+
+@pytest.fixture(scope="function")
+def simple_encoder(device):
+    """Create a minimal TransformerEncoder for testing."""
+    from src.vae_module.encoders.transformer import TransformerEncoder
+
+    return TransformerEncoder(
+        max_num_elements=100,
+        d_model=128,
+        nhead=4,
+        dim_feedforward=256,
+        dropout=0.0,
+        num_layers=2,
+    ).to(device)
+
+
+@pytest.fixture(scope="function")
+def simple_distance_decoder(device):
+    """Create a minimal DistanceMatrixDecoder for testing."""
+    from src.vae_module.decoders.distance_matrix import DistanceMatrixDecoder
+
+    return DistanceMatrixDecoder(
+        max_num_elements=100,
+        d_model=128,
+        nhead=4,
+        dim_feedforward=256,
+        dropout=0.0,
+        num_layers=2,
+        atom_type_predict=True,
+        distance_mlp_hidden_dims=[128, 64],
+        classifier_hidden_dims=[128, 64],
+        use_vectorized=True,
+    ).to(device)
+
+
+@pytest.fixture(scope="function")
+def vae_distance_model(simple_encoder, simple_distance_decoder):
+    """Create a minimal VAE with distance decoder for testing."""
+    import torch
+    from omegaconf import OmegaConf
+    from pymatgen.analysis.structure_matcher import StructureMatcher
+
+    from src.vae_module.vae_module import VAEModule
+
+    model = VAEModule(
+        encoder=simple_encoder,
+        decoder=simple_distance_decoder,
+        latent_dim=64,
+        distance_threshold=10.0,
+        loss_weights=OmegaConf.create(
+            {
+                "atom_types": 1.0,
+                "lengths": 1.0,
+                "angles": 1.0,
+                "frac_coords": 0.0,
+                "distance_regression": 10.0,
+                "distance_classifier": 10.0,
+                "kl": 0.01,
+                "fa": 0.0,
+            }
+        ),
+        augmentation=OmegaConf.create(
+            {
+                "translate": False,
+                "rotate": False,
+            }
+        ),
+        noise=OmegaConf.create(
+            {
+                "ratio": 0.0,
+                "corruption_scale": 0.0,
+            }
+        ),
+        atom_type_predict=True,
+        structure_matcher=StructureMatcher(),
+        optimizer=torch.optim.Adam,
+        scheduler=None,
+    )
+    return model

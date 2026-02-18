@@ -1,6 +1,8 @@
 # type: ignore
 """Variational Autoencoder PyTorch Lightning module."""
 
+import math
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -12,6 +14,7 @@ from pymatgen.core import Structure
 from src.data.data_augmentation import apply_augmentation, apply_noise
 from src.data.dataset_util import lattice_params_to_matrix_torch
 from src.data.schema import CrystalBatch, create_empty_batch
+from src.utils.distance_matrix import compute_pbc_distance_matrix_batch
 from src.utils.timeout import timeout
 from src.vae_module.encoders.precomputed_mace import PrecomputedMACEEncoder
 
@@ -31,6 +34,7 @@ class VAEModule(LightningModule):
         structure_matcher: StructureMatcher,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
+        distance_threshold: float = 10.0,
     ) -> None:
         super().__init__()
 
@@ -65,14 +69,20 @@ class VAEModule(LightningModule):
         # but isinstance check works fine for now.
         is_deterministic = isinstance(self.encoder, PrecomputedMACEEncoder)
         encoded["posterior"] = DiagonalGaussianDistribution(
-            encoded["moments"],
-            deterministic=is_deterministic
+            encoded["moments"], deterministic=is_deterministic
         )
         return encoded
 
     def decode(self, encoded: dict) -> dict:
-        encoded["x"] = self.post_quant_conv(encoded["x"])
-        decoder_out = self.decoder(encoded)
+        # Create a clean dict copy to avoid in-place modification
+        # This ensures batch structure tensors remain untouched
+        decoder_input = {
+            "x": self.post_quant_conv(encoded["x"]),
+            "batch": encoded["batch"],
+            "num_atoms": encoded["num_atoms"],
+            "token_idx": encoded["token_idx"],
+        }
+        decoder_out = self.decoder(decoder_input)
         return decoder_out
 
     def forward(self, batch: CrystalBatch) -> tuple:
@@ -112,9 +122,37 @@ class VAEModule(LightningModule):
             )
         loss_lengths = F.mse_loss(decoder_out["lengths"], true_batch.lengths_scaled)
         loss_angles = F.mse_loss(decoder_out["angles"], true_batch.angles_radians)
-        loss_frac_coords = F.mse_loss(
-            decoder_out["frac_coords"], true_batch.frac_coords
-        )
+
+        # Handle different decoder types: distance matrix vs fractional coordinates
+        loss_distance_matrix = 0
+        loss_distance_classifier = 0
+        loss_distance_regression = 0
+        loss_frac_coords = 0
+
+        if (
+            "distance_matrix" in decoder_out
+            and decoder_out["distance_matrix"] is not None
+        ):
+            # Distance matrix decoder: compute distance matrix loss
+            true_distance_matrices, _ = compute_pbc_distance_matrix_batch(true_batch)
+            pred_distance_matrices = decoder_out["distance_matrix"]
+            classifier_logits = decoder_out["distance_classifier_logits"]
+
+            loss_result = self._compute_distance_matrix_loss(
+                pred_distance_matrices,
+                true_distance_matrices,
+                classifier_logits,
+                distance_threshold=self.hparams.get("distance_threshold", 10.0),
+            )
+
+            loss_distance_matrix = loss_result["total_loss"]
+            loss_distance_classifier = loss_result["classifier_loss"]
+            loss_distance_regression = loss_result["distance_loss"]
+        elif "frac_coords" in decoder_out and decoder_out["frac_coords"] is not None:
+            # Standard decoder: compute fractional coordinates loss
+            loss_frac_coords = F.mse_loss(
+                decoder_out["frac_coords"], true_batch.frac_coords
+            )
 
         # 2. KL divergence loss
         loss_kl = encoded["posterior"].kl().mean()
@@ -136,11 +174,22 @@ class VAEModule(LightningModule):
             fa_loss = fa_loss_1 + fa_loss_2
 
         # Total loss
+        # Separate weights for distance regression and classifier
+        # Backward compatible: fall back to distance_matrix weight if separate weights not provided
+        weight_distance_regression = self.hparams.loss_weights.get(
+            "distance_regression", self.hparams.loss_weights.get("distance_matrix", 0)
+        )
+        weight_distance_classifier = self.hparams.loss_weights.get(
+            "distance_classifier", self.hparams.loss_weights.get("distance_matrix", 0)
+        )
+
         loss = (
             self.hparams.loss_weights["atom_types"] * loss_atom_types
             + self.hparams.loss_weights["lengths"] * loss_lengths
             + self.hparams.loss_weights["angles"] * loss_angles
-            + self.hparams.loss_weights["frac_coords"] * loss_frac_coords
+            + self.hparams.loss_weights.get("frac_coords", 0) * loss_frac_coords
+            + weight_distance_regression * loss_distance_regression
+            + weight_distance_classifier * loss_distance_classifier
             + self.hparams.loss_weights["kl"] * loss_kl
             + self.hparams.loss_weights["fa"] * fa_loss
         )
@@ -151,8 +200,82 @@ class VAEModule(LightningModule):
             "loss_lengths": loss_lengths,
             "loss_angles": loss_angles,
             "loss_frac_coords": loss_frac_coords,
+            "loss_distance_matrix": loss_distance_matrix,
+            "loss_distance_classifier": loss_distance_classifier,
+            "loss_distance_regression": loss_distance_regression,
             "loss_kl": loss_kl,
             "fa_loss": fa_loss,
+        }
+
+    def _compute_distance_matrix_loss(
+        self,
+        pred_matrices: list[torch.Tensor],
+        true_matrices: list[torch.Tensor],
+        classifier_logits: list[torch.Tensor],
+        distance_threshold: float = 10.0,
+    ) -> dict[str, torch.Tensor]:
+        """Compute classification + sparse regression loss.
+
+        Args:
+            pred_matrices: Predicted distance matrices
+            true_matrices: Ground truth distance matrices
+            classifier_logits: Raw classifier logits (pre-sigmoid)
+            distance_threshold: Threshold for sparse loss (Ångströms)
+
+        Returns:
+            dict with 'distance_loss', 'classifier_loss', 'total_loss'
+        """
+        # New sparse loss with classifier
+        total_distance_loss = 0
+        total_classifier_loss = 0
+        num_pairs_regression = 0
+        num_pairs_classification = 0
+
+        for pred_dist, true_dist, logits in zip(
+            pred_matrices, true_matrices, classifier_logits, strict=False
+        ):
+            true_dist = true_dist.to(pred_dist.device)
+
+            N = pred_dist.shape[0]
+            triu_indices = torch.triu_indices(N, N, offset=1, device=pred_dist.device)
+
+            pred_upper = pred_dist[triu_indices[0], triu_indices[1]]
+            true_upper = true_dist[triu_indices[0], triu_indices[1]]
+            logits_upper = logits[triu_indices[0], triu_indices[1]]
+
+            # Classification: target=1 if distance < threshold (predicting "is close")
+            targets = (true_upper < distance_threshold).float()
+            classifier_loss = F.binary_cross_entropy_with_logits(
+                logits_upper, targets, reduction="sum"
+            )
+            total_classifier_loss += classifier_loss
+            num_pairs_classification += len(logits_upper)
+
+            # Regression: only pairs where true distance < threshold
+            close_pairs_mask = true_upper < distance_threshold
+            if close_pairs_mask.sum() > 0:
+                pred_close = pred_upper[close_pairs_mask]
+                true_close = true_upper[close_pairs_mask]
+                distance_loss = F.mse_loss(pred_close, true_close, reduction="sum")
+                total_distance_loss += distance_loss
+                num_pairs_regression += close_pairs_mask.sum().item()
+
+        # Average losses
+        avg_classifier_loss = (
+            total_classifier_loss / num_pairs_classification
+            if num_pairs_classification > 0
+            else torch.tensor(0.0, device=pred_matrices[0].device)
+        )
+        avg_distance_loss = (
+            total_distance_loss / num_pairs_regression
+            if num_pairs_regression > 0
+            else torch.tensor(0.0, device=pred_matrices[0].device)
+        )
+
+        return {
+            "distance_loss": avg_distance_loss,
+            "classifier_loss": avg_classifier_loss,
+            "total_loss": avg_distance_loss + avg_classifier_loss,
         }
 
     def training_step(self, batch: CrystalBatch, batch_idx: int) -> torch.Tensor:
@@ -163,21 +286,27 @@ class VAEModule(LightningModule):
             == 0
         ):
             structure_matching = self._compute_structure_matching(batch)
-            res["structure_matching"] = structure_matching
+            # Only log structure matching if it's a valid number
+            if not math.isnan(structure_matching):
+                res["structure_matching"] = structure_matching
         self._log_metrics(res, "train", batch_size=batch.num_graphs)
         return res["total_loss"]
 
     def validation_step(self, batch: CrystalBatch, batch_idx: int) -> dict:
         res = self.calculate_loss(batch, training=False)
         structure_matching = self._compute_structure_matching(batch)
-        res["structure_matching"] = structure_matching
+        # Only log structure matching if it's a valid number
+        if not math.isnan(structure_matching):
+            res["structure_matching"] = structure_matching
         self._log_metrics(res, "val", batch_size=batch.num_graphs)
         return res
 
     def test_step(self, batch: CrystalBatch, batch_idx: int) -> dict:
         res = self.calculate_loss(batch, training=False)
         structure_matching = self._compute_structure_matching(batch)
-        res["structure_matching"] = structure_matching
+        # Only log structure matching if it's a valid number
+        if not math.isnan(structure_matching):
+            res["structure_matching"] = structure_matching
         self._log_metrics(res, "test", batch_size=batch.num_graphs)
         return res
 
@@ -252,13 +381,27 @@ class VAEModule(LightningModule):
             else batch.atom_types
         )
         _atom_types[_atom_types == 0] = 1  # Prevent 0 atom type
-        _frac_coords = decoder_out["frac_coords"]
         _lengths_scaled = decoder_out["lengths"]
         _lengths = _lengths_scaled * batch.num_atoms[:, None] ** (1 / 3)
         _angles_radians = decoder_out["angles"]
         _angles = torch.rad2deg(_angles_radians)
         _lattices = lattice_params_to_matrix_torch(_lengths, _angles)
-        _cart_coords = torch.einsum("bij,bi->bj", _lattices[batch.batch], _frac_coords)
+
+        # Handle fractional coordinates based on decoder type
+        if (
+            "distance_matrix" in decoder_out
+            and decoder_out["distance_matrix"] is not None
+        ):
+            # Distance matrix decoder: use dummy coordinates
+            _frac_coords = torch.zeros((batch.num_nodes, 3), device=self.device)
+            _cart_coords = torch.zeros((batch.num_nodes, 3), device=self.device)
+        else:
+            # Standard decoder: use predicted coordinates
+            _frac_coords = decoder_out["frac_coords"]
+            _cart_coords = torch.einsum(
+                "bij,bi->bj", _lattices[batch.batch], _frac_coords
+            )
+
         batch_recon.update(
             pos=_cart_coords,
             atom_types=_atom_types,
@@ -276,6 +419,15 @@ class VAEModule(LightningModule):
     def _compute_structure_matching(self, batch: CrystalBatch) -> float:
         # Sample from the VAE
         decoder_out, _ = self(batch)
+
+        # Skip structure matching if using distance matrix decoder
+        # (requires valid fractional coordinates)
+        if (
+            "distance_matrix" in decoder_out
+            and decoder_out["distance_matrix"] is not None
+        ):
+            return float("nan")
+
         batch_recon = self.reconstruct(decoder_out, batch)
         rec_structures = batch_recon.to_structure()
         # Structure matching

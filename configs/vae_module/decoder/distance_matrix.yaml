@@ -1,0 +1,15 @@
+_target_: src.vae_module.decoders.distance_matrix.DistanceMatrixDecoder
+
+atom_type_predict: ${vae_module.atom_type_predict}
+max_num_elements: ${vae_module.encoder.max_num_elements}
+d_model: 512
+nhead: 8
+dim_feedforward: 2048
+activation: "gelu"
+dropout: 0.0
+norm_first: true
+bias: true
+num_layers: 8
+distance_mlp_hidden_dims: [512, 256]
+classifier_hidden_dims: [512, 256]  # Hidden dimensions for classifier MLP (defaults to same as distance_mlp)
+use_vectorized: true  # Enable vectorized distance matrix computation
